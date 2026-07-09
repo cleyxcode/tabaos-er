@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Filament\Resources\PenugasanResource\Pages;
+
+use App\Filament\Resources\PenugasanResource;
+use Filament\Actions;
+use Filament\Resources\Pages\ListRecords;
+
+class ListPenugasan extends ListRecords
+{
+    protected static string $resource = PenugasanResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [Actions\CreateAction::make()];
+    }
+}
