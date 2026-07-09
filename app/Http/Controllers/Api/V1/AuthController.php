@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
 use App\Http\Requests\Api\UpdateProfilRequest;
+use App\Http\Requests\Api\ForgotPasswordRequest;
+use App\Http\Requests\Api\ResetPasswordRequest;
 use App\Http\Resources\Api\PenggunaResource;
 use App\Models\Pengguna;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -79,5 +85,59 @@ class AuthController extends Controller
             new PenggunaResource($pengguna->fresh()),
             'Profil berhasil diperbarui.'
         );
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $otp = (string) rand(100000, 999999);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'token'      => $otp,
+                'created_at' => now(),
+            ]
+        );
+
+        Mail::to($request->email)->send(new OtpMail($otp));
+
+        return $this->success(null, 'Kode OTP telah dikirim ke email Anda.');
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $resetRequest = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->otp)
+            ->first();
+
+        if (! $resetRequest) {
+            return $this->error('Kode OTP tidak valid.', 400);
+        }
+
+        // Cek apakah OTP sudah expired (10 menit)
+        if (Carbon::parse($resetRequest->created_at)->addMinutes(10)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            return $this->error('Kode OTP sudah kedaluwarsa.', 400);
+        }
+
+        $pengguna = Pengguna::where('email', $request->email)->first();
+
+        if (! $pengguna) {
+            return $this->error('Pengguna tidak ditemukan.', 404);
+        }
+
+        // password akan otomatis di hash karena ada casts => ['password' => 'hashed'] di Model Pengguna
+        $pengguna->update([
+            'password' => $request->password,
+        ]);
+
+        // Revoke all old tokens just in case
+        $pengguna->tokens()->delete();
+
+        // Hapus token reset setelah berhasil
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        return $this->success(null, 'Password berhasil diubah. Silakan login dengan password baru.');
     }
 }

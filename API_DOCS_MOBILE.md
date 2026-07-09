@@ -102,7 +102,44 @@ Endpoint ini digunakan untuk alur registrasi, login, dan profile pengguna warga.
 - **Headers:** `Authorization: Bearer {token}`
 - **Body:** `name`, `phone`, `email` (semua opsional). Jika merubah password sertakan `password`, `password_confirmation`.
 
-### 5. Logout
+### 5. Lupa Password (Request OTP)
+- **Endpoint:** `POST /auth/forgot-password`
+- **Body Request:**
+```json
+{
+    "email": "johndoe@example.com"
+}
+```
+- **Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Kode OTP telah dikirim ke email Anda.",
+    "data": null
+}
+```
+
+### 6. Reset Password (Verifikasi OTP & Password Baru)
+- **Endpoint:** `POST /auth/reset-password`
+- **Body Request:**
+```json
+{
+    "email": "johndoe@example.com",
+    "otp": "123456",
+    "password": "newpassword123",
+    "password_confirmation": "newpassword123"
+}
+```
+- **Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Password berhasil diubah. Silakan login dengan password baru.",
+    "data": null
+}
+```
+
+### 7. Logout
 - **Endpoint:** `POST /auth/logout`
 - **Headers:** `Authorization: Bearer {token}`
 
