@@ -181,7 +181,7 @@ class SampleDataSeeder extends Seeder
         // 11. Pedoman BHD
         for ($i = 0; $i < 10; $i++) {
             DB::table('pedoman_bhd')->insert([
-                'judul' => 'Pedoman ' . $faker->catchPhrase,
+                'judul' => 'Pedoman ' . $faker->words(3, true),
                 'tipe_file' => $faker->randomElement(['pdf', 'video', 'gambar', 'dokumen']),
                 'deskripsi' => $faker->paragraph,
                 'file_path' => 'https://example.com/file-' . $i . '.pdf',
