@@ -10,6 +10,7 @@ use App\Models\Penugasan;
 use App\Models\Relawan;
 use App\Models\User;
 use App\Models\ZonaRawanBencana;
+use App\Observers\LaporanBencanaObserver;
 use App\Policies\AmbulansPolicy;
 use App\Policies\FaskesPolicy;
 use App\Policies\LaporanBencanaPolicy;
@@ -33,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Observer
+        LaporanBencana::observe(LaporanBencanaObserver::class);
+
+        // Policies
         Gate::policy(LaporanBencana::class, LaporanBencanaPolicy::class);
         Gate::policy(Faskes::class, FaskesPolicy::class);
         Gate::policy(Ambulans::class, AmbulansPolicy::class);

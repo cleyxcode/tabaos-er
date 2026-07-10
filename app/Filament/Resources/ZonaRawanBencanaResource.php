@@ -6,6 +6,7 @@ use App\Filament\Resources\ZonaRawanBencanaResource\Pages;
 use App\Filament\Resources\ZonaRawanBencanaResource\RelationManagers\TitikEvakuasiRelationManager;
 use App\Models\ZonaRawanBencana;
 use Filament\Forms;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -49,80 +50,35 @@ class ZonaRawanBencanaResource extends Resource
                 ->columnSpanFull(),
             Forms\Components\Hidden::make('created_by')
                 ->default(fn () => Auth::id()),
-            Forms\Components\ViewField::make('map_css_fix')
-                ->view('filament.forms.components.map-css-fix')
-                ->columnSpanFull()
-                ->hiddenLabel(),
-            \Dotswan\MapPicker\Fields\Map::make('polygon')
+            ViewField::make('polygon')
                 ->label('Area Zona Rawan (Polygon)')
-                ->required()
-                ->helperText('Gunakan alat gambar di pojok kiri atas peta untuk menggambar area (polygon/kotak).')
-                ->geoMan(true)
-                ->geoManEditable(true)
-                ->drawCircleMarker(false)
-                ->drawMarker(false)
-                ->drawPolyline(false)
-                ->drawCircle(false)
-                ->drawRectangle(true)
-                ->drawPolygon(true)
-                ->setColor('#ef4444')
-                ->defaultLocation(-3.2384, 130.1453)
-                ->zoom(7)
-                ->afterStateHydrated(function (Forms\Components\Field $component, $state) {
-                    if (is_string($state)) {
-                        $state = json_decode($state, true);
+                ->view('filament.forms.components.leaflet-polygon')
+                ->helperText('Klik ikon polygon atau persegi di panel kiri atas peta untuk menggambar area zona rawan.')
+                ->afterStateHydrated(function (Forms\Components\Field $component, $state): void {
+                    // Normalise: accept JSON string, array of {lat,lng}, or null
+                    if (is_string($state) && !empty($state)) {
+                        $decoded = json_decode($state, true);
+                        $state   = is_array($decoded) ? $decoded : [];
                     }
-                    
-                    if (is_array($state) && !isset($state['geojson'])) {
-                        if (!empty($state)) {
-                            $coordinates = [];
-                            foreach ($state as $point) {
-                                $lat = $point['lat'] ?? $point[0] ?? 0;
-                                $lng = $point['lng'] ?? $point[1] ?? 0;
-                                $coordinates[] = [(float)$lng, (float)$lat];
-                            }
-                            
-                            if (!empty($coordinates) && $coordinates[0] !== end($coordinates)) {
-                                $coordinates[] = $coordinates[0];
-                            }
-
-                            $geojson = [
-                                'type' => 'FeatureCollection',
-                                'features' => [
-                                    [
-                                        'type' => 'Feature',
-                                        'geometry' => [
-                                            'type' => 'Polygon',
-                                            'coordinates' => [$coordinates]
-                                        ],
-                                        'properties' => new \stdClass()
-                                    ]
-                                ]
-                            ];
-                            
-                            $component->state([
-                                'lat' => $coordinates[0][1] ?? -3.2384,
-                                'lng' => $coordinates[0][0] ?? 130.1453,
-                                'geojson' => $geojson
-                            ]);
-                        } else {
-                            $component->state(['lat' => -3.2384, 'lng' => 130.1453]);
-                        }
-                    }
+                    $component->state(is_array($state) ? $state : []);
                 })
-                ->dehydrateStateUsing(function ($state) {
-                    if (isset($state['geojson']['features'][0]['geometry']['coordinates'][0])) {
-                        $coords = $state['geojson']['features'][0]['geometry']['coordinates'][0];
-                        $formatted = [];
-                        foreach ($coords as $point) {
-                            $formatted[] = [
-                                'lat' => $point[1],
-                                'lng' => $point[0]
-                            ];
-                        }
-                        return $formatted;
+                ->dehydrateStateUsing(function ($state): array {
+                    // Always persist as a plain array of {lat, lng} objects
+                    if (is_string($state)) {
+                        $decoded = json_decode($state, true);
+                        $state   = is_array($decoded) ? $decoded : [];
                     }
-                    return [];
+                    if (!is_array($state)) {
+                        return [];
+                    }
+                    // Strip the closing duplicate point (same as first) if present
+                    $points = array_values($state);
+                    $last   = end($points);
+                    $first  = reset($points);
+                    if (count($points) > 1 && $last === $first) {
+                        array_pop($points);
+                    }
+                    return $points;
                 })
                 ->columnSpanFull(),
         ])->columns(2);

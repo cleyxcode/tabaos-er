@@ -46,6 +46,14 @@ return [
             'driver' => 'sanctum',
             'provider' => 'pengguna',
         ],
+        'akun_relawan' => [
+            'driver'   => 'sanctum',
+            'provider' => 'akun_relawan',
+        ],
+        'akun_faskes' => [
+            'driver'   => 'sanctum',
+            'provider' => 'akun_faskes',
+        ],
     ],
 
     /*
@@ -68,11 +76,19 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model'  => env('AUTH_MODEL', User::class),
         ],
         'pengguna' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Pengguna::class,
+            'model'  => App\Models\Pengguna::class,
+        ],
+        'akun_relawan' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\AkunRelawan::class,
+        ],
+        'akun_faskes' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\AkunFaskes::class,
         ],
     ],
 

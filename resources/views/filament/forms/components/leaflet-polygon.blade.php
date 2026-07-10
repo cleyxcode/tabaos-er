@@ -1,174 +1,225 @@
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
-    <div
-        x-data="{
-            state: $wire.entangle('{{ $getStatePath() }}'),
-            map: null,
-            drawnItems: null,
-            initMap() {
-                // Inisialisasi Peta
-                this.map = L.map($refs.map).setView([-3.2384, 130.1453], 6);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(this.map);
+    {{--
+        Outer div owns the Alpine component so the map and the hidden input
+        share the same `coords` state. wire:ignore is applied only to the
+        map container so Livewire never re-renders the Leaflet DOM, but the
+        hidden input (outside wire:ignore) is still synced on every request.
+    --}}
+    <div x-data="leafletPolygon({{ json_encode($getState() ?: []) }})" x-init="init()">
 
-                // Buat layer untuk item yang digambar
-                this.drawnItems = new L.FeatureGroup();
-                this.map.addLayer(this.drawnItems);
+        {{-- Leaflet map – protected from Livewire re-renders --}}
+        <div wire:ignore>
+            <div
+                x-ref="mapEl"
+                style="height: 420px; width: 100%; border-radius: 8px; border: 1px solid #e5e7eb;"
+            ></div>
+        </div>
 
-                // Tambahkan kontrol draw (Polygon & Rectangle saja)
-                let drawControl = new L.Control.Draw({
-                    draw: {
-                        polyline: false,
-                        circle: false,
-                        marker: false,
-                        circlemarker: false,
-                        polygon: {
-                            allowIntersection: false,
-                            showArea: true,
-                            drawError: {
-                                color: '#e1e100',
-                                message: 'Area tidak boleh tumpang tindih!'
-                            },
-                            shapeOptions: {
-                                color: '#ef4444'
-                            }
-                        },
-                        rectangle: {
-                            shapeOptions: {
-                                color: '#ef4444'
-                            }
-                        }
-                    },
-                    edit: {
-                        featureGroup: this.drawnItems,
-                        remove: true
-                    }
-                });
-                this.map.addControl(drawControl);
+        {{-- Hidden input Livewire reads on form save; kept outside wire:ignore --}}
+        <input
+            type="hidden"
+            x-bind:value="JSON.stringify(coords)"
+            wire:model="{{ $getStatePath() }}"
+        >
 
-                // Jika ada state awal (edit data)
-                if (this.state && Array.isArray(this.state) && this.state.length > 0) {
-                    let latlngs = this.state.map(point => [point.lat, point.lng]);
-                    let polygon = L.polygon(latlngs, {color: '#ef4444'});
-                    this.drawnItems.addLayer(polygon);
-                    this.map.fitBounds(polygon.getBounds());
-                }
-
-                // Event ketika selesai menggambar
-                this.map.on(L.Draw.Event.CREATED, (e) => {
-                    let layer = e.layer;
-                    
-                    // Hapus layer lama (hanya izinkan 1 polygon)
-                    this.drawnItems.clearLayers();
-                    this.drawnItems.addLayer(layer);
-                    
-                    this.updateState();
-                });
-
-                // Event ketika diedit atau dihapus
-                this.map.on(L.Draw.Event.EDITED, () => this.updateState());
-                this.map.on(L.Draw.Event.DELETED, () => {
-                    this.state = [];
-                });
-                
-                // Fix map render issue in tabs/modals
-                setTimeout(() => {
-                    this.map.invalidateSize();
-                }, 500);
-            },
-            updateState() {
-                let layers = this.drawnItems.getLayers();
-                if (layers.length > 0) {
-                    let layer = layers[0];
-                    let latlngs = layer.getLatLngs()[0]; // Ambil array koordinat
-                    
-                    // Format ke [{lat, lng}]
-                    let formatted = latlngs.map(ll => ({
-                        lat: ll.lat,
-                        lng: ll.lng
-                    }));
-                    
-                    this.state = formatted;
-                } else {
-                    this.state = [];
-                }
-            }
-        }"
-        x-init="
-            if (typeof L === 'undefined') {
-                // Muat Leaflet & Leaflet Draw CSS/JS
-                let link1 = document.createElement('link');
-                link1.rel = 'stylesheet';
-                link1.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                document.head.appendChild(link1);
-
-                let link2 = document.createElement('link');
-                link2.rel = 'stylesheet';
-                link2.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css';
-                document.head.appendChild(link2);
-
-                let script1 = document.createElement('script');
-                script1.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                document.head.appendChild(script1);
-
-                script1.onload = () => {
-                    let script2 = document.createElement('script');
-                    script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js';
-                    document.head.appendChild(script2);
-                    
-                    script2.onload = () => {
-                        initMap();
-                    };
-                };
-            } else if (typeof L.Control.Draw === 'undefined') {
-                let script2 = document.createElement('script');
-                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js';
-                document.head.appendChild(script2);
-                
-                script2.onload = () => {
-                    initMap();
-                };
-            } else {
-                initMap();
-            }
-        "
-        wire:ignore
-    >
-        <div x-ref="map" style="height: 400px; width: 100%; z-index: 10; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
-        
-        <!-- Fix CSS khusus untuk Tailwind + Leaflet Draw -->
+        {{-- Fix Tailwind/Leaflet z-index conflicts and polygon fill colour --}}
         <style>
+            /* Z-index agar peta tidak tertimpa elemen Filament */
+            .leaflet-pane                 { z-index: 10; }
+            .leaflet-top, .leaflet-bottom { z-index: 20; }
+
+            /* Ikon toolbar draw (sprite sheet) */
             .leaflet-draw-toolbar a {
                 background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png') !important;
             }
-            .leaflet-draw-toolbar a.leaflet-draw-draw-polygon {
-                background-position: -31px -2px !important;
+            @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+                .leaflet-draw-toolbar a {
+                    background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png') !important;
+                    background-size: 300px 30px !important;
+                }
             }
-            .leaflet-draw-toolbar a.leaflet-draw-draw-rectangle {
-                background-position: -62px -2px !important;
+
+            /*
+             * Tailwind base styles mereset SVG sehingga semua path/polyline tidak punya
+             * stroke/fill. Selector di bawah ini mengembalikannya untuk semua elemen
+             * Leaflet — baik yang sudah jadi maupun yang sedang digambar.
+             */
+            .leaflet-overlay-pane svg path,
+            .leaflet-overlay-pane svg polyline,
+            .leaflet-overlay-pane svg polygon,
+            .leaflet-zoom-animated path,
+            .leaflet-zoom-animated polyline,
+            .leaflet-zoom-animated polygon {
+                vector-effect: non-scaling-stroke;
             }
-            .leaflet-draw-toolbar a.leaflet-draw-edit-edit {
-                background-position: -150px -2px !important;
+
+            /* Polygon / rectangle selesai digambar */
+            .leaflet-interactive {
+                stroke:         #ef4444 !important;
+                stroke-width:   3       !important;
+                stroke-opacity: 1       !important;
+                fill:           #ef4444 !important;
+                fill-opacity:   0.2     !important;
             }
-            .leaflet-draw-toolbar a.leaflet-draw-edit-remove {
-                background-position: -211px -2px !important;
+
+            /* Garis panduan saat sedang menggambar (sebelum di-Finish) */
+            .leaflet-draw-guide-dash {
+                stroke:         #ef4444 !important;
+                stroke-opacity: 0.8     !important;
             }
-            .leaflet-retina .leaflet-draw-toolbar a {
-                background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png') !important;
-                background-size: 300px 30px !important;
-            }
-            .leaflet-pane {
-                z-index: 10;
-            }
-            .leaflet-top, .leaflet-bottom {
-                z-index: 20;
-            }
-            path.leaflet-interactive {
-                stroke: #ef4444 !important;
-                stroke-width: 3px !important;
+
+            /* Garis bantu (polyline sementara) Leaflet.Draw */
+            .leaflet-overlay-pane svg polyline {
+                stroke:         #ef4444 !important;
+                stroke-width:   2px     !important;
+                stroke-opacity: 1       !important;
+                fill:           none    !important;
             }
         </style>
-    </div>
+
+        <script>
+            function leafletPolygon(initialCoords) {
+                return {
+                    coords:     Array.isArray(initialCoords) ? initialCoords : [],
+                    map:        null,
+                    drawnItems: null,
+
+                    init() {
+                        this.loadDeps(() => this.bootMap());
+                    },
+
+                    /**
+                     * Dynamically load Leaflet + Leaflet.Draw from CDN.
+                     * Guards against double-loading when multiple maps exist on one page.
+                     */
+                    loadDeps(callback) {
+                        if (window.L && window.L.Control && window.L.Control.Draw) {
+                            callback();
+                            return;
+                        }
+
+                        const head = document.head;
+
+                        const addLink = (href) => {
+                            if (document.querySelector(`link[href="${href}"]`)) return;
+                            const el = document.createElement('link');
+                            el.rel   = 'stylesheet';
+                            el.href  = href;
+                            head.appendChild(el);
+                        };
+
+                        const addScript = (src, onload) => {
+                            // If the tag already exists, poll until the library is ready
+                            if (document.querySelector(`script[src="${src}"]`)) {
+                                const poll = setInterval(() => {
+                                    const ready = src.includes('draw')
+                                        ? window.L && window.L.Control && window.L.Control.Draw
+                                        : !!window.L;
+                                    if (ready) { clearInterval(poll); onload(); }
+                                }, 50);
+                                return;
+                            }
+                            const el   = document.createElement('script');
+                            el.src     = src;
+                            el.onload  = onload;
+                            head.appendChild(el);
+                        };
+
+                        addLink('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+                        addLink('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css');
+
+                        const drawSrc = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js';
+
+                        if (!window.L) {
+                            addScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', () => {
+                                addScript(drawSrc, callback);
+                            });
+                        } else {
+                            addScript(drawSrc, callback);
+                        }
+                    },
+
+                    bootMap() {
+                        this.map = L.map(this.$refs.mapEl).setView([-3.2384, 130.1453], 7);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom:     19,
+                            attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+                        }).addTo(this.map);
+
+                        this.drawnItems = new L.FeatureGroup();
+                        this.map.addLayer(this.drawnItems);
+
+                        this.map.addControl(new L.Control.Draw({
+                            draw: {
+                                polyline:     false,
+                                circle:       false,
+                                marker:       false,
+                                circlemarker: false,
+                                polygon: {
+                                    allowIntersection: false,
+                                    showArea:          true,
+                                    shapeOptions: {
+                                        color:       '#ef4444',
+                                        weight:      3,
+                                        opacity:     1,
+                                        fillColor:   '#ef4444',
+                                        fillOpacity: 0.2,
+                                    },
+                                },
+                                rectangle: {
+                                    shapeOptions: {
+                                        color:       '#ef4444',
+                                        weight:      3,
+                                        opacity:     1,
+                                        fillColor:   '#ef4444',
+                                        fillOpacity: 0.2,
+                                    },
+                                },
+                            },
+                            edit: { featureGroup: this.drawnItems, remove: true },
+                        }));
+
+                        // Restore saved polygon when editing an existing record
+                        if (this.coords.length > 0) {
+                            const latlngs = this.coords.map(p => [p.lat, p.lng]);
+                            const poly    = L.polygon(latlngs, {
+                                color:       '#ef4444',
+                                weight:      3,
+                                opacity:     1,
+                                fillColor:   '#ef4444',
+                                fillOpacity: 0.2,
+                            });
+                            this.drawnItems.addLayer(poly);
+                            this.map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+                        }
+
+                        // Only one shape at a time — clear before adding the new one
+                        this.map.on(L.Draw.Event.CREATED, (e) => {
+                            this.drawnItems.clearLayers();
+                            this.drawnItems.addLayer(e.layer);
+                            this.syncCoords();
+                        });
+
+                        this.map.on(L.Draw.Event.EDITED,  () => this.syncCoords());
+
+                        this.map.on(L.Draw.Event.DELETED, () => {
+                            this.coords = [];
+                        });
+
+                        // Leaflet needs a nudge when rendered inside hidden tabs/panels
+                        setTimeout(() => this.map.invalidateSize(), 400);
+                    },
+
+                    syncCoords() {
+                        const layers = this.drawnItems.getLayers();
+                        if (!layers.length) { this.coords = []; return; }
+                        // getLatLngs()[0] returns the outer ring for both Polygon and Rectangle
+                        this.coords = layers[0].getLatLngs()[0].map(ll => ({ lat: ll.lat, lng: ll.lng }));
+                    },
+                };
+            }
+        </script>
+
+    </div>{{-- /.x-data --}}
 </x-dynamic-component>

@@ -41,4 +41,9 @@ protected $fillable = [
     {
         return $this->hasMany(Ambulans::class);
     }
+
+    public function akunFaskes()
+    {
+        return $this->hasMany(AkunFaskes::class);
+    }
 }

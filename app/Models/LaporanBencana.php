@@ -33,6 +33,8 @@ protected $fillable = [
         'luka_ringan_jenis_kelamin',
         'penyebab_luka_ringan',
         'status',
+        'akun_relawan_ditugaskan',
+        'status_penanganan',
         'verified_at',
     ];
 
@@ -70,5 +72,10 @@ protected $fillable = [
     public function penugasan()
     {
         return $this->hasMany(Penugasan::class, 'laporan_id');
+    }
+
+    public function relawanDitugaskan()
+    {
+        return $this->belongsTo(AkunRelawan::class, 'akun_relawan_ditugaskan');
     }
 }

@@ -30,4 +30,9 @@ protected $fillable = [
     {
         return $this->hasMany(Penugasan::class);
     }
+
+    public function akunRelawan()
+    {
+        return $this->hasOne(AkunRelawan::class);
+    }
 }

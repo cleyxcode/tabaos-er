@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ccd80ae2816cb0df7800ee382e14d9be",
+    "content-hash": "1b17dbe5e49842dfefb4e62b7adf5c78",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -1622,6 +1622,50 @@
                 }
             ],
             "time": "2025-12-03T09:33:47+00:00"
+        },
+        {
+            "name": "ginocampra/laravel-leaflet",
+            "version": "1.0.9",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ginocampra/laravel-leaflet.git",
+                "reference": "b8b9dd4407a0c7856994d1e03e4825f10b126d67"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ginocampra/laravel-leaflet/zipball/b8b9dd4407a0c7856994d1e03e4825f10b126d67",
+                "reference": "b8b9dd4407a0c7856994d1e03e4825f10b126d67",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Ginocampra\\LaravelLeaflet\\LaravelLeafletServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Ginocampra\\LaravelLeaflet\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Gino Campra",
+                    "email": "gino@gcampra.com.br"
+                }
+            ],
+            "description": "Allows you to create pages with Leaflet maps in an integrated way with Laravel",
+            "support": {
+                "issues": "https://github.com/ginocampra/laravel-leaflet/issues",
+                "source": "https://github.com/ginocampra/laravel-leaflet/tree/1.0.9"
+            },
+            "time": "2026-06-23T13:44:37+00:00"
         },
         {
             "name": "graham-campbell/result-type",

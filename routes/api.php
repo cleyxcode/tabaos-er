@@ -52,3 +52,55 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('relawan/status', [RelawanController::class, 'status']);
     });
 });
+
+// =============================================================================
+// ROUTE RELAWAN
+// =============================================================================
+use App\Http\Controllers\Api\RelawanAuthController;
+use App\Http\Controllers\Api\RelawanOperasionalController;
+use App\Http\Controllers\Api\FaskesAuthController;
+use App\Http\Controllers\Api\FaskesOperasionalController;
+
+Route::prefix('v1/relawan-auth')->middleware('throttle:api')->group(function () {
+    Route::post('login', [RelawanAuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::middleware('auth:akun_relawan')->group(function () {
+        Route::post('logout', [RelawanAuthController::class, 'logout']);
+        Route::get('me',     [RelawanAuthController::class, 'me']);
+    });
+});
+
+Route::prefix('v1/relawan')
+    ->middleware(['throttle:api', 'auth:akun_relawan', 'akun.aktif:akun_relawan'])
+    ->group(function () {
+        Route::put('lokasi',               [RelawanOperasionalController::class, 'updateLokasi']);
+        Route::post('fcm-token',           [RelawanOperasionalController::class, 'updateFcmToken']);
+        Route::get('laporan-terdekat',     [RelawanOperasionalController::class, 'laporanTerdekat']);
+        Route::get('laporan/{id}',         [RelawanOperasionalController::class, 'detailLaporan']);
+        Route::post('laporan/{id}/claim',  [RelawanOperasionalController::class, 'claimLaporan']);
+        Route::put('laporan/{id}/selesai', [RelawanOperasionalController::class, 'selesaikanLaporan']);
+        Route::get('peta',                 [RelawanOperasionalController::class, 'dataPeta']);
+        Route::get('notifikasi',           [RelawanOperasionalController::class, 'notifikasi']);
+        Route::put('notifikasi/{id}/baca', [RelawanOperasionalController::class, 'tandaiBaca']);
+    });
+
+// =============================================================================
+// ROUTE FASKES
+// =============================================================================
+Route::prefix('v1/faskes-auth')->middleware('throttle:api')->group(function () {
+    Route::post('login', [FaskesAuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::middleware('auth:akun_faskes')->group(function () {
+        Route::post('logout', [FaskesAuthController::class, 'logout']);
+        Route::get('me',     [FaskesAuthController::class, 'me']);
+    });
+});
+
+Route::prefix('v1/faskes')
+    ->middleware(['throttle:api', 'auth:akun_faskes', 'akun.aktif:akun_faskes'])
+    ->group(function () {
+        Route::post('fcm-token',   [FaskesOperasionalController::class, 'updateFcmToken']);
+        Route::get('laporan',      [FaskesOperasionalController::class, 'laporan']);
+        Route::get('laporan/{id}', [FaskesOperasionalController::class, 'detailLaporan']);
+        Route::get('peta',         [FaskesOperasionalController::class, 'dataPeta']);
+        Route::get('profil',       [FaskesOperasionalController::class, 'profil']);
+        Route::get('notifikasi',   [FaskesOperasionalController::class, 'notifikasi']);
+    });
