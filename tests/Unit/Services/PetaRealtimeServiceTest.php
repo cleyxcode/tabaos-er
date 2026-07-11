@@ -204,4 +204,55 @@ final class PetaRealtimeServiceTest extends TestCase
         $this->assertSame(1, $result['counts']['laporan']);
         $this->assertSame('Dekat', $result['laporan'][0]['title']);
     }
+
+    public function testResolvedLaporanExcludedFromMapByDefault(): void
+    {
+        LaporanBencana::create([
+            'nama_pelapor' => 'Aktif',
+            'nomor_kontak' => '0811111111',
+            'jenis_kejadian' => 'Banjir',
+            'latitude' => -3.695845,
+            'longitude' => 128.181011,
+            'tanggal_kejadian' => now(),
+            'deskripsi' => 'Aktif',
+            'status' => 'ditangani',
+            'status_penanganan' => 'sedang_ditangani',
+        ]);
+
+        LaporanBencana::create([
+            'nama_pelapor' => 'Selesai Penanganan',
+            'nomor_kontak' => '0822222222',
+            'jenis_kejadian' => 'Kebakaran',
+            'latitude' => -3.696845,
+            'longitude' => 128.182011,
+            'tanggal_kejadian' => now(),
+            'deskripsi' => 'Selesai penanganan',
+            'status' => 'ditangani',
+            'status_penanganan' => 'selesai_ditangani',
+        ]);
+
+        LaporanBencana::create([
+            'nama_pelapor' => 'Selesai Status',
+            'nomor_kontak' => '0833333333',
+            'jenis_kejadian' => 'Gempa Bumi',
+            'latitude' => -3.697845,
+            'longitude' => 128.183011,
+            'tanggal_kejadian' => now(),
+            'deskripsi' => 'Selesai status',
+            'status' => 'selesai',
+            'status_penanganan' => 'sedang_ditangani',
+        ]);
+
+        $filter = new PetaRealtimeFilterDTO(
+            tampilkanRelawan: false,
+            tampilkanFaskes: false,
+            tampilkanEvakuasi: false,
+            tampilkanPetugas: false,
+        );
+
+        $result = $this->service->getData($filter);
+
+        $this->assertSame(1, $result['counts']['laporan']);
+        $this->assertSame('Aktif', $result['laporan'][0]['title']);
+    }
 }

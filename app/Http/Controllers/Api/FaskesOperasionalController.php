@@ -96,6 +96,7 @@ class FaskesOperasionalController extends Controller
         $radius = (float) ($request->radius ?? 15);
 
         $laporanQuery = LaporanBencana::query()
+            ->where('status', '!=', 'selesai')
             ->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');

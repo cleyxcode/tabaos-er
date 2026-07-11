@@ -74,10 +74,14 @@ final class PetaRealtimeService
 
         if ($filter->statusLaporan !== null) {
             $query->where('status', $filter->statusLaporan);
+        } else {
+            $query->where('status', '!=', 'selesai');
         }
 
         if ($filter->statusPenanganan !== null) {
             $query->where('status_penanganan', $filter->statusPenanganan);
+        } else {
+            $query->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani']);
         }
 
         if ($filter->hasRadiusFilter()) {

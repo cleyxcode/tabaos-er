@@ -167,7 +167,10 @@ class RelawanOperasionalController extends Controller
             ], 403);
         }
 
-        $laporan->update(['status_penanganan' => 'selesai_ditangani']);
+        $laporan->update([
+            'status_penanganan' => 'selesai_ditangani',
+            'status'            => 'selesai',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -190,6 +193,7 @@ class RelawanOperasionalController extends Controller
         $radius = (float) ($request->radius ?? 20);
 
         $laporanQuery = LaporanBencana::query()
+            ->where('status', '!=', 'selesai')
             ->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
