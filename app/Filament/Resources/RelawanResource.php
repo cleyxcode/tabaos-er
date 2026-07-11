@@ -44,6 +44,10 @@ class RelawanResource extends Resource
                 ->label('Keahlian Khusus')
                 ->maxLength(255)
                 ->nullable(),
+            Forms\Components\TextInput::make('organisasi')
+                ->label('Organisasi')
+                ->maxLength(255)
+                ->nullable(),
             Forms\Components\Select::make('status')
                 ->label('Status')
                 ->options([
@@ -76,6 +80,10 @@ class RelawanResource extends Resource
                 Tables\Columns\TextColumn::make('keahlian')
                     ->label('Keahlian')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('organisasi')
+                    ->label('Organisasi')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
