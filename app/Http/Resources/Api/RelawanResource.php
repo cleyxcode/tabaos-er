@@ -10,8 +10,9 @@ class RelawanResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'           => $this->id,
-            'nik'          => $this->nik,
+            'id'            => $this->id,
+            'is_registered' => true,
+            'nik'           => $this->nik,
             'alamat'       => $this->alamat,
             'keahlian'     => $this->keahlian,
             'organisasi'   => $this->organisasi,

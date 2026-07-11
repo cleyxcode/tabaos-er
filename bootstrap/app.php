@@ -38,6 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     $statusCode = 401;
                     $message = 'Unauthenticated';
+                } elseif ($e instanceof \Error && str_contains($e->getMessage(), 'Maximum call stack')) {
+                    $statusCode = 500;
+                    $message = 'Konfigurasi autentikasi tidak valid. Periksa config/sanctum.php';
                 } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
                     $statusCode = 404;
                     $message = 'Data tidak ditemukan';

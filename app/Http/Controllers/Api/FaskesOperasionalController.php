@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Services\HaversineService;
+use App\Traits\FormatsLaporanRingkas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class FaskesOperasionalController extends Controller
 {
+    use FormatsLaporanRingkas;
+
     public function __construct(protected HaversineService $haversine) {}
 
     // POST /faskes/fcm-token
@@ -54,26 +57,7 @@ class FaskesOperasionalController extends Controller
         $laporan = $this->haversine->scopeQuery($query, $lat, $lng, $radius)
             ->paginate(10);
 
-        $laporan->getCollection()->transform(function (LaporanBencana $item) {
-            return [
-                'id'               => $item->id,
-                'jenis_kejadian'   => $item->jenis_kejadian,
-                'deskripsi'        => $item->deskripsi,
-                'status'           => $item->status,
-                'status_penanganan' => $item->status_penanganan,
-                'latitude'         => $item->latitude,
-                'longitude'        => $item->longitude,
-                'alamat_lokasi'    => $item->alamat_lokasi,
-                'tanggal_kejadian' => $item->tanggal_kejadian,
-                'korban'           => [
-                    'meninggal_jumlah'   => $item->meninggal_jumlah,
-                    'luka_berat_jumlah'  => $item->luka_berat_jumlah,
-                    'luka_ringan_jumlah' => $item->luka_ringan_jumlah,
-                    'hilang_jumlah'      => $item->hilang_jumlah,
-                ],
-                'jarak_km' => isset($item->jarak_km) ? round((float) $item->jarak_km, 2) : null,
-            ];
-        });
+        $laporan->getCollection()->transform(fn (LaporanBencana $item) => $this->formatLaporanRingkas($item));
 
         return response()->json([
             'success' => true,
@@ -95,7 +79,7 @@ class FaskesOperasionalController extends Controller
 
         return response()->json([
             'success' => true,
-            'laporan' => $laporan,
+            'laporan' => $this->formatLaporanRingkas($laporan),
         ]);
     }
 
@@ -154,11 +138,25 @@ class FaskesOperasionalController extends Controller
     // GET /faskes/profil
     public function profil(Request $request): JsonResponse
     {
-        $akun = $request->user('akun_faskes')->load('faskes.ambulans');
+        $akun   = $request->user('akun_faskes')->load('faskes.ambulans');
+        $faskes = $akun->faskes;
 
         return response()->json([
             'success' => true,
-            'profil'  => $akun->faskes,
+            'profil'  => [
+                'id'        => $faskes?->id,
+                'nama'      => $faskes?->nama,
+                'tipe'      => $faskes?->tipe,
+                'alamat'    => $faskes?->alamat,
+                'latitude'  => $faskes?->latitude  ? (float) $faskes->latitude  : null,
+                'longitude' => $faskes?->longitude ? (float) $faskes->longitude : null,
+                'ambulans'  => $faskes?->ambulans->map(fn ($a) => [
+                    'id'         => $a->id,
+                    'plat_nomor' => $a->plat_nomor ?? '',
+                    'status'     => $a->status,
+                    'no_telepon' => $a->no_telepon ?? $a->nomor_telepon ?? '',
+                ])->values(),
+            ],
         ]);
     }
 
@@ -180,6 +178,8 @@ class FaskesOperasionalController extends Controller
         $laporan = $this->haversine->scopeQuery($query, $lat, $lng, 15)
             ->orderByDesc('created_at')
             ->paginate(15);
+
+        $laporan->getCollection()->transform(fn (LaporanBencana $item) => $this->formatLaporanRingkas($item));
 
         return response()->json([
             'success' => true,

@@ -7,11 +7,14 @@ use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Models\RelawanNotifikasi;
 use App\Services\HaversineService;
+use App\Traits\FormatsLaporanRingkas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RelawanOperasionalController extends Controller
 {
+    use FormatsLaporanRingkas;
+
     public function __construct(protected HaversineService $haversine) {}
 
     // PUT /relawan/lokasi
@@ -71,9 +74,7 @@ class RelawanOperasionalController extends Controller
             ->with('relawanDitugaskan.relawan.pengguna')
             ->paginate(10);
 
-        $laporan->getCollection()->transform(function (LaporanBencana $item) {
-            return $this->formatLaporan($item);
-        });
+        $laporan->getCollection()->transform(fn (LaporanBencana $item) => $this->formatLaporanRingkas($item));
 
         return response()->json([
             'success' => true,
@@ -120,7 +121,7 @@ class RelawanOperasionalController extends Controller
 
         return response()->json([
             'success'          => true,
-            'laporan'          => $laporan,
+            'laporan'          => $this->formatLaporanRingkas($laporan),
             'relawan_terdekat' => $relawanTerdekat,
         ]);
     }
@@ -240,7 +241,16 @@ class RelawanOperasionalController extends Controller
 
         return response()->json([
             'success'      => true,
-            'data'         => $notifikasi->items(),
+            'data'         => collect($notifikasi->items())->map(fn (RelawanNotifikasi $n) => [
+                'id'           => $n->id,
+                'sudah_dibaca' => $n->sudah_dibaca,
+                'created_at'   => $n->created_at?->toISOString(),
+                'laporan'      => $n->laporan ? [
+                    'id'             => $n->laporan->id,
+                    'jenis_kejadian' => $n->laporan->jenis_kejadian,
+                    'alamat_lokasi'  => $n->laporan->alamat_lokasi,
+                ] : null,
+            ])->values(),
             'unread_count' => $unreadCount,
             'meta'         => [
                 'current_page' => $notifikasi->currentPage(),
@@ -268,34 +278,5 @@ class RelawanOperasionalController extends Controller
             'success' => true,
             'message' => 'Notifikasi ditandai dibaca',
         ]);
-    }
-
-    // ── helper ───────────────────────────────────────────────────────────────
-
-    private function formatLaporan(LaporanBencana $item): array
-    {
-        return [
-            'id'               => $item->id,
-            'jenis_kejadian'   => $item->jenis_kejadian,
-            'deskripsi'        => $item->deskripsi,
-            'status'           => $item->status,
-            'status_penanganan' => $item->status_penanganan,
-            'latitude'         => $item->latitude,
-            'longitude'        => $item->longitude,
-            'alamat_lokasi'    => $item->alamat_lokasi,
-            'tanggal_kejadian' => $item->tanggal_kejadian,
-            'created_at'       => $item->created_at,
-            'korban'           => [
-                'meninggal_jumlah'   => $item->meninggal_jumlah,
-                'luka_berat_jumlah'  => $item->luka_berat_jumlah,
-                'luka_ringan_jumlah' => $item->luka_ringan_jumlah,
-                'hilang_jumlah'      => $item->hilang_jumlah,
-            ],
-            'jarak_km'             => isset($item->jarak_km) ? round((float) $item->jarak_km, 2) : null,
-            'relawan_ditugaskan'   => $item->relawanDitugaskan ? [
-                'id'   => $item->relawanDitugaskan->id,
-                'nama' => $item->relawanDitugaskan->relawan?->pengguna?->name,
-            ] : null,
-        ];
     }
 }

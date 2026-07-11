@@ -15,7 +15,7 @@ class TitikEvakuasiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = TitikEvakuasi::query();
+        $query = TitikEvakuasi::with('zona:id,nama_zona');
 
         if ($request->filled('zona_id')) {
             $query->where('zona_id', $request->zona_id);

@@ -47,6 +47,8 @@ class RelawanAuthController extends Controller
                     'nama'        => $akun->relawan->pengguna?->name,
                     'keahlian'    => $akun->relawan->keahlian,
                     'organisasi'  => $akun->relawan->organisasi ?? null,
+                    'nik'         => $akun->relawan->nik,
+                    'alamat'      => $akun->relawan->alamat,
                 ] : null,
             ],
         ]);
@@ -69,7 +71,19 @@ class RelawanAuthController extends Controller
 
         return response()->json([
             'success'      => true,
-            'akun_relawan' => $akun,
+            'akun_relawan' => [
+                'id'     => $akun->id,
+                'email'  => $akun->email,
+                'status' => $akun->status,
+                'relawan' => $akun->relawan ? [
+                    'id'         => $akun->relawan->id,
+                    'nama'       => $akun->relawan->pengguna?->name,
+                    'keahlian'   => $akun->relawan->keahlian,
+                    'organisasi' => $akun->relawan->organisasi,
+                    'nik'        => $akun->relawan->nik,
+                    'alamat'     => $akun->relawan->alamat,
+                ] : null,
+            ],
         ]);
     }
 }

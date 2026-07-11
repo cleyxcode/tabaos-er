@@ -18,6 +18,10 @@ class TitikEvakuasiResource extends JsonResource
                 'lat' => (float) $this->latitude,
                 'lng' => (float) $this->longitude,
             ] : null,
+            'zona_rawan' => $this->whenLoaded('zona', fn () => [
+                'id'   => $this->zona->id,
+                'nama' => $this->zona->nama_zona,
+            ]),
         ];
     }
 }
