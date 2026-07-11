@@ -30,6 +30,7 @@ class RelawanController extends Controller
             'nik'         => $request->nik,
             'alamat'      => $request->alamat,
             'keahlian'    => $request->keahlian,
+            'organisasi'  => $request->organisasi,
             'status'      => 'pending',
         ]);
 

@@ -10,17 +10,18 @@ class RelawanResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
-            'nik'         => $this->nik,
-            'alamat'      => $this->alamat,
-            'keahlian'    => $this->keahlian,
-            'status'      => $this->status,
-            'pengguna'    => $this->whenLoaded('pengguna', fn () => [
+            'id'           => $this->id,
+            'nik'          => $this->nik,
+            'alamat'       => $this->alamat,
+            'keahlian'     => $this->keahlian,
+            'organisasi'   => $this->organisasi,
+            'status'       => $this->status,
+            'pengguna'     => $this->whenLoaded('pengguna', fn () => [
                 'id'    => $this->pengguna->id,
                 'name'  => $this->pengguna->name,
                 'phone' => $this->pengguna->phone,
             ]),
-            'created_at'  => $this->created_at?->toISOString(),
+            'created_at'   => $this->created_at?->toISOString(),
         ];
     }
 }

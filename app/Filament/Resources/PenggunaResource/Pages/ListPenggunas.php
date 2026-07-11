@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PenggunaResource\Pages;
 
 use App\Filament\Resources\PenggunaResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPenggunas extends ListRecords
@@ -11,6 +12,8 @@ class ListPenggunas extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return []; // Remove Create action for read-only resource
+        return [
+            CreateAction::make()->label('Tambah Pengguna'),
+        ];
     }
 }

@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Relawan extends Model
 {
     protected $table = 'relawan';
-protected $fillable = [
+    protected $fillable = [
         'pengguna_id',
         'nik',
         'alamat',
         'keahlian',
+        'organisasi',
         'status',
         'approved_by',
     ];

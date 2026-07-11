@@ -79,7 +79,7 @@ class AuthController extends Controller
     public function updateProfil(UpdateProfilRequest $request): JsonResponse
     {
         $pengguna = auth('pengguna')->user();
-        $pengguna->update($request->only('name', 'email'));
+        $pengguna->update($request->only('name', 'email', 'phone'));
 
         return $this->success(
             new PenggunaResource($pengguna->fresh()),

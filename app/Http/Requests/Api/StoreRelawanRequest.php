@@ -16,9 +16,10 @@ class StoreRelawanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nik'      => ['required', 'string', 'max:20'],
-            'alamat'   => ['required', 'string', 'max:500'],
-            'keahlian' => ['nullable', 'string', 'max:255'],
+            'nik'         => ['required', 'string', 'max:20'],
+            'alamat'      => ['required', 'string', 'max:500'],
+            'keahlian'    => ['nullable', 'string', 'max:255'],
+            'organisasi'  => ['nullable', 'string', 'max:255'],
         ];
     }
 
