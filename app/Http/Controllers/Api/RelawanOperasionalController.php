@@ -7,6 +7,7 @@ use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Models\RelawanNotifikasi;
 use App\Services\HaversineService;
+use App\Services\RelawanKedatanganService;
 use App\Traits\FormatsLaporanRingkas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,10 @@ class RelawanOperasionalController extends Controller
 {
     use FormatsLaporanRingkas;
 
-    public function __construct(protected HaversineService $haversine) {}
+    public function __construct(
+        protected HaversineService $haversine,
+        protected RelawanKedatanganService $kedatangan,
+    ) {}
 
     // PUT /relawan/lokasi
     public function updateLokasi(Request $request): JsonResponse
@@ -31,6 +35,12 @@ class RelawanOperasionalController extends Controller
             'longitude'         => $data['longitude'],
             'lokasi_updated_at' => now(),
         ]);
+
+        $this->kedatangan->periksaDanBeritahuAdmin(
+            $akun->fresh(),
+            (float) $data['latitude'],
+            (float) $data['longitude'],
+        );
 
         return response()->json([
             'success'    => true,
@@ -145,6 +155,7 @@ class RelawanOperasionalController extends Controller
         $laporan->update([
             'akun_relawan_ditugaskan' => $akun->id,
             'status_penanganan'       => 'sedang_ditangani',
+            'relawan_sampai_notified_at' => null,
         ]);
 
         return response()->json([

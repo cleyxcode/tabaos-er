@@ -212,7 +212,7 @@
                             const existing = this.markerRegistry[key];
 
                             if (existing) {
-                                existing.setLatLng([item.latitude, item.longitude]);
+                                this.animateMarker(existing, [item.latitude, item.longitude]);
                                 existing.setPopupContent(this.buildPopup(type, item));
                                 return;
                             }
@@ -323,6 +323,25 @@
                     if (!iso) return '-';
                     const d = new Date(iso);
                     return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                },
+
+                animateMarker(marker, targetLatLng, duration = 900) {
+                    if (marker._animFrame) cancelAnimationFrame(marker._animFrame);
+                    const start = marker.getLatLng();
+                    const startTime = performance.now();
+                    const step = (now) => {
+                        const t = Math.min(1, (now - startTime) / duration);
+                        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                        const lat = start.lat + (targetLatLng[0] - start.lat) * eased;
+                        const lng = start.lng + (targetLatLng[1] - start.lng) * eased;
+                        marker.setLatLng([lat, lng]);
+                        if (t < 1) {
+                            marker._animFrame = requestAnimationFrame(step);
+                        } else {
+                            marker._animFrame = null;
+                        }
+                    };
+                    marker._animFrame = requestAnimationFrame(step);
                 },
             };
         }

@@ -67,7 +67,7 @@ final class PetaRealtimePage extends Page
     {
         return $schema->components([
             Section::make('Filter Data')
-                ->description('Saring laporan dan titik yang ditampilkan di peta. Data diperbarui otomatis setiap 10 detik.')
+                ->description('Saring laporan dan titik yang ditampilkan di peta. Data diperbarui otomatis setiap 5 detik.')
                 ->icon('heroicon-o-funnel')
                 ->headerActions([
                     Action::make('resetFilters')
@@ -197,7 +197,7 @@ final class PetaRealtimePage extends Page
                 ->columns(['default' => 2, 'md' => 3, 'xl' => 5]),
 
             SchemaView::make('filament.pages.peta-realtime')
-                ->poll('10s')
+                ->poll('5s')
                 ->viewData(fn (): array => [
                     'mapData' => $this->getMapData(),
                     'radiusFilter' => $this->getRadiusFilterForMap(),

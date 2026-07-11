@@ -35,6 +35,7 @@ protected $fillable = [
         'status',
         'akun_relawan_ditugaskan',
         'status_penanganan',
+        'relawan_sampai_notified_at',
         'verified_at',
     ];
 
@@ -44,6 +45,7 @@ protected $fillable = [
             'foto' => 'array',
             'tanggal_kejadian' => 'datetime',
             'verified_at' => 'datetime',
+            'relawan_sampai_notified_at' => 'datetime',
             'di_lokasi_kejadian' => 'boolean',
             'latitude' => 'float',
             'longitude' => 'float',

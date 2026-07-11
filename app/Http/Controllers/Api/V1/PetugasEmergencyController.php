@@ -15,12 +15,12 @@ class PetugasEmergencyController extends Controller
 
     // Nomor darurat resmi statis
     private const NOMOR_DARURAT = [
-        ['nama' => 'Nomor Darurat Nasional', 'nomor' => '112', 'kategori' => 'darurat'],
-        ['nama' => 'Ambulans / Medis Darurat', 'nomor' => '119', 'kategori' => 'medis'],
-        ['nama' => 'Polisi',                   'nomor' => '110', 'kategori' => 'keamanan'],
-        ['nama' => 'Pemadam Kebakaran',         'nomor' => '113', 'kategori' => 'kebakaran'],
-        ['nama' => 'SAR / Basarnas',            'nomor' => '115', 'kategori' => 'sar'],
-        ['nama' => 'BPBD (Bencana)',            'nomor' => '117', 'kategori' => 'bencana'],
+        ['nama' => 'Call Center Layanan Emergency Kesehatan', 'nomor' => '119', 'kategori' => 'medis'],
+        ['nama' => 'Call Center Darurat Ambon',               'nomor' => '112', 'kategori' => 'darurat'],
+        ['nama' => 'Damkar',                                  'nomor' => '113', 'kategori' => 'kebakaran'],
+        ['nama' => 'BASARNAS',                                'nomor' => '115', 'kategori' => 'sar'],
+        ['nama' => 'BNPB',                                    'nomor' => '117', 'kategori' => 'bencana'],
+        ['nama' => 'Call Center Kepolisian',                  'nomor' => '110', 'kategori' => 'keamanan'],
     ];
 
     public function index(Request $request): JsonResponse
