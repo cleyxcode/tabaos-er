@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ZonaRawanBencanaResource\Pages;
 use App\Filament\Resources\ZonaRawanBencanaResource\RelationManagers\TitikEvakuasiRelationManager;
+use App\Filament\Support\ZonaRawanMapTable;
 use App\Models\ZonaRawanBencana;
 use Filament\Forms;
 use Filament\Forms\Components\ViewField;
@@ -104,6 +105,7 @@ class ZonaRawanBencanaResource extends Resource
                         'success' => 'rendah',
                     ])
                     ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                ZonaRawanMapTable::polygonColumn(),
                 Tables\Columns\TextColumn::make('pembuat.name')
                     ->label('Dibuat Oleh')
                     ->default('-'),
@@ -118,6 +120,7 @@ class ZonaRawanBencanaResource extends Resource
                     ]),
             ])
             ->actions([
+                ZonaRawanMapTable::lihatPetaAction(),
                 \Filament\Actions\EditAction::make(),
                 \Filament\Actions\DeleteAction::make(),
             ])

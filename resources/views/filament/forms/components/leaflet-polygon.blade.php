@@ -209,6 +209,17 @@
 
                         // Leaflet needs a nudge when rendered inside hidden tabs/panels
                         setTimeout(() => this.map.invalidateSize(), 400);
+
+                        // Paksa style inline pada layer yang sedang digambar
+                        this.map.on('draw:drawvertex draw:editvertex', () => {
+                            this.$refs.mapEl.querySelectorAll('.leaflet-overlay-pane svg path, .leaflet-overlay-pane svg polyline').forEach(el => {
+                                el.style.stroke = '#ef4444';
+                                el.style.strokeWidth = '3px';
+                                el.style.strokeOpacity = '1';
+                                el.style.fill = el.tagName.toLowerCase() === 'polyline' ? 'none' : '#ef4444';
+                                el.style.fillOpacity = el.tagName.toLowerCase() === 'polyline' ? '0' : '0.2';
+                            });
+                        });
                     },
 
                     syncCoords() {
