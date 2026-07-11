@@ -13,33 +13,47 @@ class StoreLaporanBencanaRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Isi nama_pelapor dan nomor_kontak otomatis dari data user jika
+     * tidak dikirim oleh client (Flutter tidak wajib mengirimnya).
+     */
+    protected function prepareForValidation(): void
+    {
+        $user = auth('pengguna')->user();
+
+        if ($user) {
+            if (empty($this->nama_pelapor)) {
+                $this->merge(['nama_pelapor' => $user->name]);
+            }
+            if (empty($this->nomor_kontak)) {
+                $this->merge(['nomor_kontak' => $user->phone]);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'nama_pelapor'            => ['required', 'string', 'max:255'],
-            'nomor_kontak'            => ['required', 'string', 'max:20'],
-            'jenis_kejadian'          => ['required', 'string', 'in:Gempa Bumi,Tsunami,Tanah Longsor,Kebakaran,Banjir,Lainnya'],
-            'di_lokasi_kejadian'      => ['required', 'boolean'],
-            'latitude'                => ['required_if:di_lokasi_kejadian,true', 'nullable', 'numeric', 'between:-90,90'],
-            'longitude'               => ['required_if:di_lokasi_kejadian,true', 'nullable', 'numeric', 'between:-180,180'],
-            'alamat_lokasi'           => ['nullable', 'string', 'max:500'],
-            'tanggal_kejadian'        => ['required', 'date'],
-            'deskripsi'               => ['required', 'string'],
-            'foto'                    => ['nullable', 'array', 'max:5'],
-            'foto.*'                  => ['image', 'max:2048'],
-            'wilayah_id'              => ['nullable', 'integer', 'exists:wilayah,id'],
-            // Data korban
-            'meninggal_jumlah'        => ['nullable', 'integer', 'min:0'],
-            'meninggal_jenis_kelamin' => ['nullable', 'string', 'in:Laki-laki,Perempuan,Campuran'],
-            'penyebab_meninggal'      => ['nullable', 'string'],
-            'hilang_jumlah'           => ['nullable', 'integer', 'min:0'],
-            'hilang_jenis_kelamin'    => ['nullable', 'string', 'in:Laki-laki,Perempuan,Campuran'],
-            'luka_berat_jumlah'       => ['nullable', 'integer', 'min:0'],
-            'luka_berat_jenis_kelamin'=> ['nullable', 'string', 'in:Laki-laki,Perempuan,Campuran'],
-            'penyebab_luka_berat'     => ['nullable', 'string'],
-            'luka_ringan_jumlah'      => ['nullable', 'integer', 'min:0'],
-            'luka_ringan_jenis_kelamin'=> ['nullable', 'string', 'in:Laki-laki,Perempuan,Campuran'],
-            'penyebab_luka_ringan'    => ['nullable', 'string'],
+            'nama_pelapor'             => ['required', 'string', 'max:255'],
+            'nomor_kontak'             => ['required', 'string', 'max:20'],
+            'jenis_kejadian'           => [
+                'required', 'string',
+                'in:Gempa Bumi,Tsunami,Tanah Longsor,Kebakaran,Banjir,Angin Puting Beliung,Lainnya',
+            ],
+            'di_lokasi_kejadian'       => ['required', 'boolean'],
+            'latitude'                 => ['required_if:di_lokasi_kejadian,true', 'nullable', 'numeric', 'between:-90,90'],
+            'longitude'                => ['required_if:di_lokasi_kejadian,true', 'nullable', 'numeric', 'between:-180,180'],
+            'alamat_lokasi'            => ['nullable', 'string', 'max:500'],
+            'tanggal_kejadian'         => ['required', 'date'],
+            'deskripsi'                => ['required', 'string'],
+            'foto'                     => ['nullable', 'array', 'max:10'],
+            'foto.*'                   => ['image', 'max:4096'],
+            'wilayah_id'               => ['nullable', 'integer', 'exists:wilayah,id'],
+            // Data korban (semua opsional, default 0)
+            'meninggal_jumlah'         => ['nullable', 'integer', 'min:0'],
+            'luka_berat_jumlah'        => ['nullable', 'integer', 'min:0'],
+            'luka_ringan_jumlah'       => ['nullable', 'integer', 'min:0'],
+            'hilang_jumlah'            => ['nullable', 'integer', 'min:0'],
         ];
     }
 
@@ -55,9 +69,9 @@ class StoreLaporanBencanaRequest extends FormRequest
             'longitude.required_if'       => 'Longitude wajib diisi jika berada di lokasi kejadian.',
             'tanggal_kejadian.required'   => 'Tanggal kejadian wajib diisi.',
             'deskripsi.required'          => 'Deskripsi kejadian wajib diisi.',
-            'foto.max'                    => 'Maksimal 5 foto.',
+            'foto.max'                    => 'Maksimal 10 foto.',
             'foto.*.image'                => 'File harus berupa gambar.',
-            'foto.*.max'                  => 'Ukuran foto maksimal 2MB.',
+            'foto.*.max'                  => 'Ukuran foto maksimal 4MB.',
         ];
     }
 

@@ -47,8 +47,8 @@ class FaskesAuthController extends Controller
                     'nama'      => $akun->faskes->nama,
                     'tipe'      => $akun->faskes->tipe,
                     'alamat'    => $akun->faskes->alamat,
-                    'latitude'  => $akun->faskes->latitude,
-                    'longitude' => $akun->faskes->longitude,
+                    'latitude'  => $akun->faskes->latitude  ? (float) $akun->faskes->latitude  : null,
+                    'longitude' => $akun->faskes->longitude ? (float) $akun->faskes->longitude : null,
                 ] : null,
             ],
         ]);
@@ -67,10 +67,30 @@ class FaskesAuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $akun = $request->user('akun_faskes')->load('faskes.ambulans');
+        $faskes = $akun->faskes;
 
         return response()->json([
             'success'     => true,
-            'akun_faskes' => $akun,
+            'akun_faskes' => [
+                'id'           => $akun->id,
+                'nama_petugas' => $akun->nama_petugas,
+                'email'        => $akun->email,
+                'status'       => $akun->status,
+                'faskes'       => $faskes ? [
+                    'id'        => $faskes->id,
+                    'nama'      => $faskes->nama,
+                    'tipe'      => $faskes->tipe,
+                    'alamat'    => $faskes->alamat,
+                    'latitude'  => $faskes->latitude  ? (float) $faskes->latitude  : null,
+                    'longitude' => $faskes->longitude ? (float) $faskes->longitude : null,
+                    'ambulans'  => $faskes->ambulans->map(fn ($a) => [
+                        'id'           => $a->id,
+                        'plat_nomor'   => $a->plat_nomor,
+                        'status'       => $a->status,
+                        'no_telepon'   => $a->no_telepon,
+                    ])->values(),
+                ] : null,
+            ],
         ]);
     }
 }

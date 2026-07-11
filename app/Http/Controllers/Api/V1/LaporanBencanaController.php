@@ -18,7 +18,7 @@ class LaporanBencanaController extends Controller
      */
     public function index(): JsonResponse
     {
-        $laporan = LaporanBencana::with('wilayah')
+        $laporan = LaporanBencana::with(['wilayah', 'pengguna'])
             ->where('pengguna_id', auth('pengguna')->id())
             ->latest()
             ->paginate(15);
@@ -35,7 +35,7 @@ class LaporanBencanaController extends Controller
             return $this->error('Anda tidak berhak mengakses laporan ini.', 403);
         }
 
-        $laporanBencana->load('wilayah');
+        $laporanBencana->load(['wilayah', 'pengguna']);
 
         return $this->success(
             new LaporanBencanaResource($laporanBencana),
@@ -68,7 +68,7 @@ class LaporanBencanaController extends Controller
         }
 
         return $this->success(
-            new LaporanBencanaResource($laporan->load('wilayah')),
+            new LaporanBencanaResource($laporan->load(['wilayah', 'pengguna'])),
             'Laporan berhasil dibuat.',
             201
         );
