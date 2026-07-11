@@ -9,13 +9,20 @@ class Relawan extends Model
     protected $table = 'relawan';
     protected $fillable = [
         'pengguna_id',
-        'nik',
+        'umur',
         'alamat',
         'keahlian',
         'organisasi',
         'status',
         'approved_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'umur' => 'integer',
+        ];
+    }
 
     public function pengguna()
     {

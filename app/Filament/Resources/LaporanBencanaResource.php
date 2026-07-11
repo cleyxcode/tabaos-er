@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LaporanBencanaResource\Pages;
 use App\Filament\Resources\LaporanBencanaResource\RelationManagers\PenugasanRelationManager;
+use App\Filament\Support\LaporanLokasiTable;
 use App\Models\LaporanBencana;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -245,6 +246,7 @@ class LaporanBencanaResource extends Resource
                     ->label('Wilayah')
                     ->searchable()
                     ->sortable(),
+                LaporanLokasiTable::locationColumn(),
                 Tables\Columns\TextColumn::make('tanggal_kejadian')
                     ->label('Tanggal')
                     ->dateTime('d M Y H:i')
@@ -291,8 +293,28 @@ class LaporanBencanaResource extends Resource
                 Tables\Filters\SelectFilter::make('wilayah_id')
                     ->label('Wilayah')
                     ->relationship('wilayah', 'nama'),
+                Tables\Filters\TernaryFilter::make('memiliki_koordinat')
+                    ->label('Koordinat GPS')
+                    ->trueLabel('Ada koordinat')
+                    ->falseLabel('Tanpa koordinat')
+                    ->queries(
+                        true: fn ($query) => $query
+                            ->whereNotNull('latitude')
+                            ->whereNotNull('longitude')
+                            ->where(fn ($q) => $q
+                                ->where('latitude', '!=', 0)
+                                ->orWhere('longitude', '!=', 0)),
+                        false: fn ($query) => $query->where(function ($q): void {
+                            $q->whereNull('latitude')
+                                ->orWhereNull('longitude')
+                                ->orWhere(function ($q): void {
+                                    $q->where('latitude', 0)->where('longitude', 0);
+                                });
+                        }),
+                    ),
             ])
             ->actions([
+                LaporanLokasiTable::lihatLokasiAction(),
                 \Filament\Actions\Action::make('verifikasi')
                     ->label('Verifikasi')
                     ->icon('heroicon-o-check-circle')

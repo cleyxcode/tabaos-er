@@ -16,7 +16,7 @@ class StoreRelawanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nik'         => ['required', 'string', 'max:20'],
+            'umur'        => ['required', 'integer', 'min:17', 'max:80'],
             'alamat'      => ['required', 'string', 'max:500'],
             'keahlian'    => ['nullable', 'string', 'max:255'],
             'organisasi'  => ['nullable', 'string', 'max:255'],
@@ -26,7 +26,10 @@ class StoreRelawanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nik.required'    => 'NIK wajib diisi.',
+            'umur.required'    => 'Umur wajib diisi.',
+            'umur.integer'     => 'Umur harus berupa angka.',
+            'umur.min'         => 'Umur minimal 17 tahun.',
+            'umur.max'         => 'Umur maksimal 80 tahun.',
             'alamat.required' => 'Alamat wajib diisi.',
         ];
     }

@@ -27,7 +27,7 @@ class RelawanController extends Controller
 
         $relawan = Relawan::create([
             'pengguna_id' => $pengguna->id,
-            'nik'         => $request->nik,
+            'umur'        => $request->umur,
             'alamat'      => $request->alamat,
             'keahlian'    => $request->keahlian,
             'organisasi'  => $request->organisasi,

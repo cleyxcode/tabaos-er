@@ -12,7 +12,7 @@ class RelawanResource extends JsonResource
         return [
             'id'            => $this->id,
             'is_registered' => true,
-            'nik'           => $this->nik,
+            'umur'         => $this->umur,
             'alamat'       => $this->alamat,
             'keahlian'     => $this->keahlian,
             'organisasi'   => $this->organisasi,

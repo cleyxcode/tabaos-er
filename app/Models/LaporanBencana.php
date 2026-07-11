@@ -80,4 +80,34 @@ protected $fillable = [
     {
         return $this->belongsTo(AkunRelawan::class, 'akun_relawan_ditugaskan');
     }
+
+    public function memilikiKoordinat(): bool
+    {
+        if ($this->latitude === null || $this->longitude === null) {
+            return false;
+        }
+
+        return abs((float) $this->latitude) > 0.000001 || abs((float) $this->longitude) > 0.000001;
+    }
+
+    public function koordinatLabel(): ?string
+    {
+        if (! $this->memilikiKoordinat()) {
+            return null;
+        }
+
+        return sprintf('%.5f, %.5f', $this->latitude, $this->longitude);
+    }
+
+    public function googleMapsUrl(): ?string
+    {
+        if (! $this->memilikiKoordinat()) {
+            return null;
+        }
+
+        $lat = (float) $this->latitude;
+        $lng = (float) $this->longitude;
+
+        return 'https://www.google.com/maps/search/?api=1&query='.urlencode("{$lat},{$lng}");
+    }
 }

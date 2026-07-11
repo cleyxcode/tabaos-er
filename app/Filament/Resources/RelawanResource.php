@@ -31,10 +31,13 @@ class RelawanResource extends Resource
                 ->searchable()
                 ->preload()
                 ->required(),
-            Forms\Components\TextInput::make('nik')
-                ->label('NIK')
-                ->maxLength(16)
-                ->nullable(),
+            Forms\Components\TextInput::make('umur')
+                ->label('Umur')
+                ->numeric()
+                ->minValue(17)
+                ->maxValue(80)
+                ->suffix('tahun')
+                ->required(),
             Forms\Components\Textarea::make('alamat')
                 ->label('Alamat')
                 ->rows(2)
@@ -74,9 +77,10 @@ class RelawanResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('nik')
-                    ->label('NIK')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('umur')
+                    ->label('Umur')
+                    ->suffix(' tahun')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('keahlian')
                     ->label('Keahlian')
                     ->searchable(),

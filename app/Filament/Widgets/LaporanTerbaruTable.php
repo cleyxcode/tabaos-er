@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\LaporanBencanaResource;
+use App\Filament\Support\LaporanLokasiTable;
 use App\Models\LaporanBencana;
 use Filament\Actions\Action;
 use Filament\Tables;
@@ -48,6 +49,8 @@ final class LaporanTerbaruTable extends TableWidget
                 Tables\Columns\TextColumn::make('wilayah.nama')
                     ->label('Wilayah')
                     ->placeholder('-'),
+                LaporanLokasiTable::locationColumn()
+                    ->limit(28),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -94,6 +97,9 @@ final class LaporanTerbaruTable extends TableWidget
                     ])->filter()->implode(' · ') ?: '-'),
             ])
             ->recordUrl(fn (LaporanBencana $record): string => LaporanBencanaResource::getUrl('edit', ['record' => $record]))
+            ->actions([
+                LaporanLokasiTable::lihatLokasiAction(),
+            ])
             ->headerActions([
                 Action::make('lihatSemua')
                     ->label('Semua Laporan')

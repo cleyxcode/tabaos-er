@@ -33,8 +33,8 @@
                     <p class="font-medium">{{ $pengguna->relawan->organisasi ?? 'Mandiri' }}</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">NIK</p>
-                    <p class="font-medium">{{ $pengguna->relawan->nik ?? '—' }}</p>
+                    <p class="text-xs text-gray-500">Umur</p>
+                    <p class="font-medium">{{ $pengguna->relawan->umur ? $pengguna->relawan->umur.' tahun' : '—' }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500">Status</p>
