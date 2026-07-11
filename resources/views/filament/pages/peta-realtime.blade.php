@@ -44,6 +44,74 @@
         </div>
     </div>
 
+    {{-- Daftar relawan aktif di peta --}}
+    <div
+        x-show="(mapData.relawan ?? []).length > 0"
+        x-cloak
+        class="rounded-xl border border-blue-200 bg-blue-50/60 dark:border-blue-900 dark:bg-blue-950/40"
+    >
+        <div class="flex items-center justify-between border-b border-blue-200 px-4 py-3 dark:border-blue-900">
+            <div>
+                <p class="text-sm font-semibold text-blue-900 dark:text-blue-100">Relawan di Peta</p>
+                <p class="text-xs text-blue-700/80 dark:text-blue-300/80">Klik nama untuk fokus ke lokasi dan lihat detail</p>
+            </div>
+            <span
+                class="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold text-white"
+                x-text="`${(mapData.relawan ?? []).length} orang`"
+            ></span>
+        </div>
+        <div class="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <template x-for="relawan in (mapData.relawan ?? [])" :key="`relawan-list-${relawan.id}`">
+                <button
+                    type="button"
+                    x-on:click="focusMarker('relawan', relawan.id)"
+                    class="flex items-start gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:hover:bg-blue-950"
+                >
+                    <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white" x-text="relawanInitials(relawan.title)"></span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-semibold text-gray-900 dark:text-gray-100" x-text="relawan.title"></span>
+                        <span class="block truncate text-xs text-gray-500 dark:text-gray-400" x-text="relawan.keahlian || relawan.subtitle || 'Relawan'"></span>
+                        <span class="mt-0.5 block text-[11px] text-blue-600 dark:text-blue-300" x-text="`Update: ${formatTime(relawan.lokasi_updated_at)}`"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    {{-- Daftar faskes di peta --}}
+    <div
+        x-show="(mapData.faskes ?? []).length > 0"
+        x-cloak
+        class="rounded-xl border border-green-200 bg-green-50/60 dark:border-green-900 dark:bg-green-950/40"
+    >
+        <div class="flex items-center justify-between border-b border-green-200 px-4 py-3 dark:border-green-900">
+            <div>
+                <p class="text-sm font-semibold text-green-900 dark:text-green-100">Faskes di Peta</p>
+                <p class="text-xs text-green-700/80 dark:text-green-300/80">Klik nama untuk fokus ke lokasi dan lihat detail</p>
+            </div>
+            <span
+                class="rounded-full bg-green-600 px-2.5 py-0.5 text-xs font-bold text-white"
+                x-text="`${(mapData.faskes ?? []).length} faskes`"
+            ></span>
+        </div>
+        <div class="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <template x-for="faskes in (mapData.faskes ?? [])" :key="`faskes-list-${faskes.id}`">
+                <button
+                    type="button"
+                    x-on:click="focusMarker('faskes', faskes.id)"
+                    class="flex items-start gap-2 rounded-lg border border-green-200 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-green-400 hover:bg-green-50 dark:border-green-800 dark:bg-gray-900 dark:hover:bg-green-950"
+                >
+                    <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">🏥</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-semibold text-gray-900 dark:text-gray-100" x-text="faskes.title"></span>
+                        <span class="block truncate text-xs text-gray-500 dark:text-gray-400" x-text="faskes.tipe_label || faskes.tipe || 'Faskes'"></span>
+                        <span class="mt-0.5 block truncate text-[11px] text-green-700 dark:text-green-300" x-text="faskes.wilayah || faskes.subtitle || '—'"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </div>
+
     @once
         <style>
             .leaflet-pane { z-index: 10; }
@@ -52,6 +120,53 @@
                 border-radius: 50%;
                 box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
                 animation: markerPulse 2s infinite;
+            }
+            .relawan-marker-label {
+                background: rgba(255, 255, 255, 0.96);
+                color: #1e40af;
+                font-size: 10px;
+                font-weight: 700;
+                line-height: 1.2;
+                padding: 2px 6px;
+                border-radius: 6px;
+                border: 1px solid #93c5fd;
+                white-space: nowrap;
+                max-width: 96px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            }
+            .faskes-marker-label {
+                background: rgba(255, 255, 255, 0.96);
+                color: #166534;
+                font-size: 10px;
+                font-weight: 700;
+                line-height: 1.2;
+                padding: 2px 6px;
+                border-radius: 6px;
+                border: 1px solid #86efac;
+                white-space: nowrap;
+                max-width: 96px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            }
+            .relawan-popup,
+            .faskes-popup {
+                min-width: 200px;
+                line-height: 1.45;
+            }
+            .relawan-popup-name {
+                font-size: 15px;
+                font-weight: 800;
+                color: #1e40af;
+                margin-bottom: 4px;
+            }
+            .faskes-popup-name {
+                font-size: 15px;
+                font-weight: 800;
+                color: #166534;
+                margin-bottom: 4px;
             }
             @keyframes markerPulse {
                 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
@@ -238,6 +353,9 @@
                             if (existing) {
                                 this.animateMarker(existing, [item.latitude, item.longitude]);
                                 existing.setPopupContent(this.buildPopup(type, item));
+                                if (type === 'relawan' || type === 'faskes') {
+                                    existing.setIcon(this.createMarkerIcon(type, item));
+                                }
                                 return;
                             }
 
@@ -258,6 +376,13 @@
                 },
 
                 createMarker(type, item) {
+                    const icon = this.createMarkerIcon(type, item);
+                    const marker = L.marker([item.latitude, item.longitude], { icon });
+                    marker.bindPopup(this.buildPopup(type, item));
+                    return marker;
+                },
+
+                createMarkerIcon(type, item) {
                     const colors = {
                         laporan: '#ef4444',
                         relawan: '#3b82f6',
@@ -274,9 +399,56 @@
                         petugas: '🦺',
                     };
 
-                    const isRelawan = type === 'relawan';
+                    if (type === 'relawan') {
+                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Relawan');
+                        const shortName = nama.length > 16 ? `${nama.slice(0, 14)}…` : nama;
+
+                        const html = `
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                                <div class="marker-pulse" style="
+                                    background:${colors.relawan};
+                                    width:30px;height:30px;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);
+                                    font-size:14px;
+                                ">${icons.relawan}</div>
+                                <div class="relawan-marker-label" title="${nama}">${shortName}</div>
+                            </div>`;
+
+                        return L.divIcon({
+                            html,
+                            className: '',
+                            iconSize: [96, 48],
+                            iconAnchor: [48, 24],
+                        });
+                    }
+
+                    if (type === 'faskes') {
+                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Faskes');
+                        const shortName = nama.length > 16 ? `${nama.slice(0, 14)}…` : nama;
+
+                        const html = `
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                                <div style="
+                                    background:${colors.faskes};
+                                    width:30px;height:30px;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);
+                                    font-size:14px;
+                                ">${icons.faskes}</div>
+                                <div class="faskes-marker-label" title="${nama}">${shortName}</div>
+                            </div>`;
+
+                        return L.divIcon({
+                            html,
+                            className: '',
+                            iconSize: [96, 48],
+                            iconAnchor: [48, 24],
+                        });
+                    }
+
                     const html = `
-                        <div class="${isRelawan ? 'marker-pulse' : ''}" style="
+                        <div style="
                             background:${colors[type]};
                             width:28px;height:28px;border-radius:50%;
                             display:flex;align-items:center;justify-content:center;
@@ -284,31 +456,80 @@
                             font-size:14px;
                         ">${icons[type]}</div>`;
 
-                    const icon = L.divIcon({
+                    return L.divIcon({
                         html,
                         className: '',
                         iconSize: [28, 28],
                         iconAnchor: [14, 14],
                     });
-
-                    const marker = L.marker([item.latitude, item.longitude], { icon });
-                    marker.bindPopup(this.buildPopup(type, item));
-                    return marker;
                 },
 
                 buildPopup(type, item) {
+                    if (type === 'relawan') {
+                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Relawan');
+                        let rows = `<div class="relawan-popup"><div class="relawan-popup-name">🧑‍🚒 ${nama}</div>`;
+                        if (item.keahlian) rows += `<div><b>Keahlian:</b> ${this.escapeHtml(item.keahlian)}</div>`;
+                        if (item.organisasi) rows += `<div><b>Organisasi:</b> ${this.escapeHtml(item.organisasi)}</div>`;
+                        else if (item.subtitle) rows += `<div><b>Organisasi:</b> ${this.escapeHtml(item.subtitle)}</div>`;
+                        if (item.telepon) rows += `<div><b>Telepon:</b> ${this.escapeHtml(item.telepon)}</div>`;
+                        if (item.email) rows += `<div><b>Email akun:</b> ${this.escapeHtml(item.email)}</div>`;
+                        if (item.lokasi_updated_at) rows += `<div><b>Update lokasi:</b> ${this.formatTime(item.lokasi_updated_at)}</div>`;
+                        if (item.jarak_km != null) rows += `<div><b>Jarak dari pusat:</b> ${item.jarak_km} km</div>`;
+                        rows += `<div style="margin-top:4px;font-size:11px;color:#64748b">${item.latitude?.toFixed(5)}, ${item.longitude?.toFixed(5)}</div></div>`;
+                        return rows;
+                    }
+
+                    if (type === 'faskes') {
+                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Faskes');
+                        let rows = `<div class="faskes-popup"><div class="faskes-popup-name">🏥 ${nama}</div>`;
+                        if (item.tipe_label || item.tipe) rows += `<div><b>Tipe:</b> ${this.escapeHtml(item.tipe_label || item.tipe)}</div>`;
+                        if (item.alamat || item.subtitle) rows += `<div><b>Alamat:</b> ${this.escapeHtml(item.alamat || item.subtitle)}</div>`;
+                        if (item.wilayah) rows += `<div><b>Wilayah:</b> ${this.escapeHtml(item.wilayah)}</div>`;
+                        if (item.telepon) rows += `<div><b>Telepon:</b> ${this.escapeHtml(item.telepon)}</div>`;
+                        if (item.jam_operasional) rows += `<div><b>Jam operasional:</b> ${this.escapeHtml(item.jam_operasional)}</div>`;
+                        if (item.jarak_km != null) rows += `<div><b>Jarak dari pusat:</b> ${item.jarak_km} km</div>`;
+                        rows += `<div style="margin-top:4px;font-size:11px;color:#64748b">${item.latitude?.toFixed(5)}, ${item.longitude?.toFixed(5)}</div></div>`;
+                        return rows;
+                    }
+
                     let rows = `<strong>${item.title ?? item.label}</strong>`;
                     if (item.subtitle) rows += `<br><span>${item.subtitle}</span>`;
                     if (item.status_penanganan) rows += `<br>Penanganan: <b>${item.status_penanganan}</b>`;
                     if (item.status) rows += `<br>Status: <b>${item.status}</b>`;
                     if (item.wilayah) rows += `<br>Wilayah: ${item.wilayah}`;
-                    if (item.relawan) rows += `<br>Relawan: ${item.relawan}`;
+                    if (item.relawan) rows += `<br>Relawan ditugaskan: <b>${item.relawan}</b>`;
                     if (item.tanggal) rows += `<br>Waktu: ${item.tanggal}`;
                     if (item.lokasi_updated_at) rows += `<br>Update lokasi: ${this.formatTime(item.lokasi_updated_at)}`;
                     if (item.jarak_km != null) rows += `<br>Jarak: ${item.jarak_km} km`;
                     if (item.telepon) rows += `<br>Tel: ${item.telepon}`;
                     if (item.kapasitas) rows += `<br>Kapasitas: ${item.kapasitas}`;
                     return rows;
+                },
+
+                focusMarker(type, id) {
+                    const key = `${type}-${id}`;
+                    const marker = this.markerRegistry[key];
+                    if (!marker || !this.map) return;
+
+                    const targetZoom = Math.max(this.map.getZoom(), 15);
+                    this.map.setView(marker.getLatLng(), targetZoom, { animate: true });
+                    marker.openPopup();
+                },
+
+                relawanInitials(name) {
+                    if (!name) return 'R';
+                    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+                    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+                    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                },
+
+                escapeHtml(value) {
+                    return String(value ?? '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;')
+                        .replaceAll('"', '&quot;')
+                        .replaceAll("'", '&#39;');
                 },
 
                 drawRadiusIfNeeded() {

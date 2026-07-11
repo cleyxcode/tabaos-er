@@ -116,24 +116,32 @@ final class PetaRealtimeService
     private function getRelawan(PetaRealtimeFilterDTO $filter): Collection
     {
         $items = AkunRelawan::query()
-            ->with('relawan.pengguna:id,name')
+            ->with('relawan.pengguna:id,name,phone')
             ->where('status', 'aktif')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->where('lokasi_updated_at', '>=', now()->subMinutes($filter->relawanStaleMinutes))
             ->get();
 
-        return $this->applyRadiusFilter($items, $filter, fn (AkunRelawan $akun): array => [
-            'id' => $akun->id,
-            'type' => 'relawan',
-            'latitude' => (float) $akun->latitude,
-            'longitude' => (float) $akun->longitude,
-            'label' => $akun->relawan?->pengguna?->name ?? 'Relawan',
-            'title' => $akun->relawan?->pengguna?->name ?? 'Relawan',
-            'subtitle' => $akun->relawan?->organisasi,
-            'lokasi_updated_at' => $akun->lokasi_updated_at?->toIso8601String(),
-            'keahlian' => $akun->relawan?->keahlian,
-        ]);
+        return $this->applyRadiusFilter($items, $filter, function (AkunRelawan $akun): array {
+            $nama = $akun->relawan?->pengguna?->name ?? 'Relawan';
+            $organisasi = $akun->relawan?->organisasi;
+
+            return [
+                'id' => $akun->id,
+                'type' => 'relawan',
+                'latitude' => (float) $akun->latitude,
+                'longitude' => (float) $akun->longitude,
+                'label' => $nama,
+                'title' => $nama,
+                'subtitle' => filled($organisasi) ? $organisasi : 'Relawan mandiri',
+                'lokasi_updated_at' => $akun->lokasi_updated_at?->toIso8601String(),
+                'keahlian' => $akun->relawan?->keahlian,
+                'organisasi' => $organisasi,
+                'email' => $akun->email,
+                'telepon' => $akun->relawan?->pengguna?->phone,
+            ];
+        });
     }
 
     /**
@@ -161,8 +169,16 @@ final class PetaRealtimeService
             'title' => $item->nama,
             'subtitle' => $item->alamat,
             'tipe' => $item->tipe,
+            'tipe_label' => match ($item->tipe) {
+                'rumah_sakit' => 'Rumah Sakit',
+                'puskesmas' => 'Puskesmas',
+                'apotek' => 'Apotek',
+                default => ucfirst(str_replace('_', ' ', (string) $item->tipe)),
+            },
+            'alamat' => $item->alamat,
             'wilayah' => $item->wilayah?->nama,
             'telepon' => $item->nomor_telepon,
+            'jam_operasional' => $item->jam_operasional,
         ]);
     }
 
