@@ -1,7 +1,7 @@
 @php
     /** @var \App\Models\ZonaRawanBencana $zona */
     $coords = $zona->polygonCoordsNormalized();
-    $color = $zona->polygonRisikoColor();
+    $mapConfig = $zona->toMapPickerViewConfig();
 @endphp
 
 <div class="space-y-4">
@@ -26,15 +26,21 @@
 
     @if ($zona->memilikiPolygon())
         <div
-            x-data="zonaPolygonViewMap(@js($coords), @js($color), @js($zona->nama_zona))"
-            x-init="init()"
+            x-data="mapPicker($wire, @js($mapConfig))"
+            x-init="async () => {
+                do {
+                    await (new Promise(resolve => setTimeout(resolve, 100)));
+                } while (!$refs.map);
+                attach($refs.map, $refs);
+            }"
             wire:ignore
         >
             <div
-                x-ref="mapEl"
-                class="overflow-hidden rounded-xl border border-gray-200 shadow-sm dark:border-gray-700"
-                style="height: 420px; width: 100%;"
+                x-ref="map"
+                class="w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm dark:border-gray-700"
+                style="min-height: 420px; height: 420px;"
             ></div>
+            <input type="text" x-ref="formRestorationInput" style="display:none" />
         </div>
 
         <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
@@ -63,73 +69,3 @@
         </div>
     @endif
 </div>
-
-@once
-    <script>
-        function zonaPolygonViewMap(coords, color, label) {
-            return {
-                map: null,
-
-                init() {
-                    if (!coords?.length) return;
-                    this.loadLeaflet(() => this.bootMap(coords, color, label));
-                },
-
-                loadLeaflet(callback) {
-                    if (window.L) {
-                        callback();
-                        return;
-                    }
-
-                    const head = document.head;
-                    const css = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                    if (!document.querySelector(`link[href="${css}"]`)) {
-                        const link = document.createElement('link');
-                        link.rel = 'stylesheet';
-                        link.href = css;
-                        head.appendChild(link);
-                    }
-
-                    const js = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    if (document.querySelector(`script[src="${js}"]`)) {
-                        const poll = setInterval(() => {
-                            if (window.L) {
-                                clearInterval(poll);
-                                callback();
-                            }
-                        }, 50);
-                        return;
-                    }
-
-                    const script = document.createElement('script');
-                    script.src = js;
-                    script.onload = callback;
-                    head.appendChild(script);
-                },
-
-                bootMap(coords, color, label) {
-                    this.map = L.map(this.$refs.mapEl).setView([-3.6954, 128.1814], 12);
-
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap',
-                    }).addTo(this.map);
-
-                    const latlngs = coords.map(p => [p.lat, p.lng]);
-                    const poly = L.polygon(latlngs, {
-                        color,
-                        weight: 3,
-                        opacity: 1,
-                        fillColor: color,
-                        fillOpacity: 0.25,
-                    }).addTo(this.map);
-
-                    poly.bindPopup(`<strong>${label}</strong><br>${coords.length} titik polygon`);
-                    this.map.fitBounds(poly.getBounds(), { padding: [40, 40] });
-
-                    setTimeout(() => this.map?.invalidateSize(), 350);
-                },
-            };
-        }
-    </script>
-@endonce

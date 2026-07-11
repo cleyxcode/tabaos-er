@@ -6,8 +6,8 @@ use App\Filament\Resources\ZonaRawanBencanaResource\Pages;
 use App\Filament\Resources\ZonaRawanBencanaResource\RelationManagers\TitikEvakuasiRelationManager;
 use App\Filament\Support\ZonaRawanMapTable;
 use App\Models\ZonaRawanBencana;
+use Dotswan\MapPicker\Fields\Map;
 use Filament\Forms;
-use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -51,37 +51,33 @@ class ZonaRawanBencanaResource extends Resource
                 ->columnSpanFull(),
             Forms\Components\Hidden::make('created_by')
                 ->default(fn () => Auth::id()),
-            ViewField::make('polygon')
+            Map::make('polygon')
                 ->label('Area Zona Rawan (Polygon)')
-                ->view('filament.forms.components.leaflet-polygon')
-                ->helperText('Klik ikon polygon atau persegi di panel kiri atas peta untuk menggambar area zona rawan.')
+                ->helperText('Gunakan ikon polygon atau persegi di toolbar kiri atas peta untuk menggambar area zona rawan.')
+                ->columnSpanFull()
+                ->defaultLocation(latitude: -3.6954, longitude: 128.1814)
+                ->zoom(12)
+                ->extraStyles(['min-height: 420px', 'height: 420px'])
+                ->draggable()
+                ->showMarker(false)
+                ->clickable(false)
+                ->geoMan(true)
+                ->geoManEditable(true)
+                ->drawMarker(false)
+                ->drawCircle(false)
+                ->drawCircleMarker(false)
+                ->drawPolyline(false)
+                ->drawText(false)
+                ->rotateMode(false)
+                ->cutPolygon(false)
+                ->drawRectangle(true)
+                ->drawPolygon(true)
+                ->setColor('#ef4444')
+                ->setFilledColor('#ef4444')
                 ->afterStateHydrated(function (Forms\Components\Field $component, $state): void {
-                    // Normalise: accept JSON string, array of {lat,lng}, or null
-                    if (is_string($state) && !empty($state)) {
-                        $decoded = json_decode($state, true);
-                        $state   = is_array($decoded) ? $decoded : [];
-                    }
-                    $component->state(is_array($state) ? $state : []);
+                    $component->state(ZonaRawanBencana::toMapPickerState($state));
                 })
-                ->dehydrateStateUsing(function ($state): array {
-                    // Always persist as a plain array of {lat, lng} objects
-                    if (is_string($state)) {
-                        $decoded = json_decode($state, true);
-                        $state   = is_array($decoded) ? $decoded : [];
-                    }
-                    if (!is_array($state)) {
-                        return [];
-                    }
-                    // Strip the closing duplicate point (same as first) if present
-                    $points = array_values($state);
-                    $last   = end($points);
-                    $first  = reset($points);
-                    if (count($points) > 1 && $last === $first) {
-                        array_pop($points);
-                    }
-                    return $points;
-                })
-                ->columnSpanFull(),
+                ->dehydrateStateUsing(fn ($state): array => ZonaRawanBencana::extractPolygonFromMapState($state)),
         ])->columns(2);
     }
 
