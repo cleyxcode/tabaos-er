@@ -28,11 +28,11 @@ class HaversineService
      */
     public function scopeQuery($query, float $lat, float $lng, float $radiusKm = 10)
     {
-        return $query->selectRaw('*, ( 6371 * acos(
+        return $query->selectRaw('*, ( 6371 * acos(LEAST(1, GREATEST(-1,
                 cos(radians(?)) * cos(radians(latitude))
                 * cos(radians(longitude) - radians(?))
                 + sin(radians(?)) * sin(radians(latitude))
-            )) AS jarak_km', [$lat, $lng, $lat])
+            )))) AS jarak_km', [$lat, $lng, $lat])
             ->havingRaw('jarak_km <= ?', [$radiusKm])
             ->orderBy('jarak_km');
     }
