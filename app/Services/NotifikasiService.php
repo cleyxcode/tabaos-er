@@ -58,6 +58,16 @@ class NotifikasiService
 
     protected function kirimFcm(string $token, string $title, string $body, array $data = []): void
     {
+        $this->kirimPush($token, $title, $body, $data);
+    }
+
+    /**
+     * Kirim push notification via FCM ke satu perangkat.
+     *
+     * @param  array<string, string>  $data
+     */
+    public function kirimPush(string $token, string $title, string $body, array $data = []): void
+    {
         try {
             Http::withHeaders([
                 'Authorization' => 'key=' . config('services.fcm.server_key'),

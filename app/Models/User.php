@@ -75,4 +75,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(PedomanBhd::class, 'uploaded_by');
     }
+
+    public function notifikasiAdmin()
+    {
+        return $this->hasMany(NotifikasiAdmin::class, 'admin_id');
+    }
 }

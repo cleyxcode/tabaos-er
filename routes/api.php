@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\RelawanAuthController;
 use App\Http\Controllers\Api\RelawanOperasionalController;
 use App\Http\Controllers\Api\FaskesAuthController;
 use App\Http\Controllers\Api\FaskesOperasionalController;
+use App\Http\Controllers\Api\AdminPesanController;
 
 // =============================================================================
 // ROUTE RELAWAN & FASKES — harus didaftarkan SEBELUM route publik faskes/{id}
@@ -40,6 +41,9 @@ Route::prefix('v1/relawan')
         Route::get('peta',                 [RelawanOperasionalController::class, 'dataPeta']);
         Route::get('notifikasi',           [RelawanOperasionalController::class, 'notifikasi']);
         Route::put('notifikasi/{id}/baca', [RelawanOperasionalController::class, 'tandaiBaca'])->whereNumber('id');
+        Route::get('pesan-admin',              [AdminPesanController::class, 'indexRelawan']);
+        Route::get('pesan-admin/{id}',         [AdminPesanController::class, 'showRelawan'])->whereNumber('id');
+        Route::put('pesan-admin/{id}/baca',    [AdminPesanController::class, 'tandaiBacaRelawan'])->whereNumber('id');
     });
 
 Route::prefix('v1/faskes-auth')->middleware('throttle:api')->group(function () {
@@ -59,6 +63,9 @@ Route::prefix('v1/faskes')
         Route::get('peta',         [FaskesOperasionalController::class, 'dataPeta']);
         Route::get('profil',       [FaskesOperasionalController::class, 'profil']);
         Route::get('notifikasi',   [FaskesOperasionalController::class, 'notifikasi']);
+        Route::get('pesan-admin',           [AdminPesanController::class, 'indexFaskes']);
+        Route::get('pesan-admin/{id}',      [AdminPesanController::class, 'showFaskes'])->whereNumber('id');
+        Route::put('pesan-admin/{id}/baca', [AdminPesanController::class, 'tandaiBacaFaskes'])->whereNumber('id');
     });
 
 Route::prefix('v1')->middleware('throttle:api')->group(function () {

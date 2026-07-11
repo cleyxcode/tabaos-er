@@ -59,4 +59,9 @@ class AkunRelawan extends Authenticatable
     {
         return $this->hasMany(LaporanBencana::class, 'akun_relawan_ditugaskan');
     }
+
+    public function pesanAdmin()
+    {
+        return $this->morphMany(NotifikasiAdminPenerima::class, 'penerima');
+    }
 }

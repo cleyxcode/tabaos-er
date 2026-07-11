@@ -26,4 +26,9 @@ class AkunFaskes extends Authenticatable
     {
         return $this->belongsTo(Faskes::class);
     }
+
+    public function pesanAdmin()
+    {
+        return $this->morphMany(NotifikasiAdminPenerima::class, 'penerima');
+    }
 }
