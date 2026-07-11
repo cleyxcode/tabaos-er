@@ -196,7 +196,7 @@ CREATE TABLE `laporan_bencana` (
   KEY `laporan_bencana_wilayah_id_foreign` (`wilayah_id`),
   KEY `laporan_bencana_verified_by_foreign` (`verified_by`),
   KEY `laporan_bencana_akun_relawan_ditugaskan_foreign` (`akun_relawan_ditugaskan`),
-  CONSTRAINT `laporan_bencana_akun_relawan_ditugaskan_foreign` FOREIGN KEY (`akun_relawan_ditugaskan`) REFERENCES `akun_relawan` (`id`),
+  CONSTRAINT `laporan_bencana_akun_relawan_ditugaskan_foreign` FOREIGN KEY (`akun_relawan_ditugaskan`) REFERENCES `akun_relawan` (`id`) ON DELETE SET NULL,
   CONSTRAINT `laporan_bencana_pengguna_id_foreign` FOREIGN KEY (`pengguna_id`) REFERENCES `pengguna` (`id`) ON DELETE SET NULL,
   CONSTRAINT `laporan_bencana_verified_by_foreign` FOREIGN KEY (`verified_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `laporan_bencana_wilayah_id_foreign` FOREIGN KEY (`wilayah_id`) REFERENCES `wilayah` (`id`) ON DELETE SET NULL

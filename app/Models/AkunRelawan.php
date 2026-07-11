@@ -33,6 +33,14 @@ class AkunRelawan extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (AkunRelawan $akun): void {
+            LaporanBencana::where('akun_relawan_ditugaskan', $akun->id)
+                ->update(['akun_relawan_ditugaskan' => null]);
+        });
+    }
+
     public function relawan()
     {
         return $this->belongsTo(Relawan::class);

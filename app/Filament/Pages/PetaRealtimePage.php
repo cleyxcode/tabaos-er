@@ -197,7 +197,6 @@ final class PetaRealtimePage extends Page
                 ->columns(['default' => 2, 'md' => 3, 'xl' => 5]),
 
             SchemaView::make('filament.pages.peta-realtime')
-                ->poll('5s')
                 ->viewData(fn (): array => [
                     'mapData' => $this->getMapData(),
                     'radiusFilter' => $this->getRadiusFilterForMap(),
@@ -212,6 +211,17 @@ final class PetaRealtimePage extends Page
     public function getMapData(): array
     {
         return app(PetaRealtimeService::class)->getData($this->buildFilter());
+    }
+
+    /**
+     * Dipanggil dari Alpine setInterval — hanya mengembalikan JSON peta
+     * tanpa me-render ulang seluruh halaman Filament.
+     *
+     * @return array<string, mixed>
+     */
+    public function refreshMapData(): array
+    {
+        return $this->getMapData();
     }
 
     public function resetFilters(): void

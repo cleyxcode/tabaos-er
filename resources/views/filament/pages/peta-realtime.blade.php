@@ -35,11 +35,11 @@
         <div class="absolute bottom-3 left-3 z-[1000] rounded-lg bg-white/95 px-3 py-2 text-xs shadow dark:bg-gray-900/95">
             <div class="font-semibold text-gray-800 dark:text-gray-100">Legenda</div>
             <div class="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">
-                <div>🔴 Laporan ({{ $mapData['counts']['laporan'] }})</div>
-                <div>🔵 Relawan ({{ $mapData['counts']['relawan'] }})</div>
-                <div>🟢 Faskes ({{ $mapData['counts']['faskes'] }})</div>
-                <div>🟣 Titik Evakuasi ({{ $mapData['counts']['evakuasi'] }})</div>
-                <div>🟡 Petugas ({{ $mapData['counts']['petugas'] }})</div>
+                <div x-text="`🔴 Laporan (${mapData.counts?.laporan ?? 0})`"></div>
+                <div x-text="`🔵 Relawan (${mapData.counts?.relawan ?? 0})`"></div>
+                <div x-text="`🟢 Faskes (${mapData.counts?.faskes ?? 0})`"></div>
+                <div x-text="`🟣 Titik Evakuasi (${mapData.counts?.evakuasi ?? 0})`"></div>
+                <div x-text="`🟡 Petugas (${mapData.counts?.petugas ?? 0})`"></div>
             </div>
         </div>
     </div>
@@ -74,6 +74,7 @@
                 hasInitialFit: false,
                 lastDataHash: '',
                 lastRadiusHash: '',
+                pollTimer: null,
 
                 init() {
                     this.lastUpdated = this.formatTime(this.mapData.updated_at);
@@ -84,6 +85,29 @@
                         if (!component.el.contains(this.$root)) return;
                         this.syncFromDom();
                     });
+
+                    this.pollTimer = setInterval(() => this.pollMapData(), 5000);
+                    document.addEventListener('livewire:navigating', () => this.destroy(), { once: true });
+                },
+
+                destroy() {
+                    if (this.pollTimer) clearInterval(this.pollTimer);
+                },
+
+                async pollMapData() {
+                    if (!this.$wire) return;
+                    try {
+                        const data = await this.$wire.refreshMapData();
+                        if (!data) return;
+                        const nextHash = this.dataHash(data);
+                        if (nextHash !== this.lastDataHash) {
+                            this.applyMapData(data);
+                        } else {
+                            this.lastUpdated = this.formatTime(data.updated_at);
+                        }
+                    } catch (e) {
+                        console.warn('[peta-realtime] gagal memuat data peta', e);
+                    }
                 },
 
                 gunakanPusatPeta() {
