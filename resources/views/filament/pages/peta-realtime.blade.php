@@ -44,6 +44,43 @@
         </div>
     </div>
 
+    {{-- Daftar laporan di peta --}}
+    <div
+        x-show="(mapData.laporan ?? []).length > 0"
+        x-cloak
+        class="rounded-xl border border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/40"
+    >
+        <div class="flex items-center justify-between border-b border-red-200 px-4 py-3 dark:border-red-900">
+            <div>
+                <p class="text-sm font-semibold text-red-900 dark:text-red-100">Laporan di Peta</p>
+                <p class="text-xs text-red-700/80 dark:text-red-300/80">Klik untuk zoom ke lokasi kejadian</p>
+            </div>
+            <span
+                class="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white"
+                x-text="`${(mapData.laporan ?? []).length} laporan`"
+            ></span>
+        </div>
+        <div class="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <template x-for="laporan in (mapData.laporan ?? [])" :key="`laporan-list-${laporan.id}`">
+                <button
+                    type="button"
+                    x-on:click="focusMarker('laporan', laporan.id)"
+                    class="flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm shadow-sm transition dark:bg-gray-900"
+                    :class="activeMarkerKey === `laporan-${laporan.id}`
+                        ? 'border-red-500 bg-red-100 dark:border-red-500 dark:bg-red-950'
+                        : 'border-red-200 bg-white hover:border-red-400 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950'"
+                >
+                    <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-600 text-sm text-white">⚠️</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-semibold text-gray-900 dark:text-gray-100" x-text="laporan.label"></span>
+                        <span class="block truncate text-xs text-gray-500 dark:text-gray-400" x-text="laporan.title"></span>
+                        <span class="mt-0.5 block truncate text-[11px] text-red-700 dark:text-red-300" x-text="laporan.subtitle || laporan.wilayah || '—'"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </div>
+
     {{-- Daftar relawan aktif di peta --}}
     <div
         x-show="(mapData.relawan ?? []).length > 0"
@@ -65,7 +102,10 @@
                 <button
                     type="button"
                     x-on:click="focusMarker('relawan', relawan.id)"
-                    class="flex items-start gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:hover:bg-blue-950"
+                    class="flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm shadow-sm transition dark:bg-gray-900"
+                    :class="activeMarkerKey === `relawan-${relawan.id}`
+                        ? 'border-blue-500 bg-blue-100 dark:border-blue-500 dark:bg-blue-950'
+                        : 'border-blue-200 bg-white hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950'"
                 >
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white" x-text="relawanInitials(relawan.title)"></span>
                     <span class="min-w-0 flex-1">
@@ -99,7 +139,10 @@
                 <button
                     type="button"
                     x-on:click="focusMarker('faskes', faskes.id)"
-                    class="flex items-start gap-2 rounded-lg border border-green-200 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-green-400 hover:bg-green-50 dark:border-green-800 dark:bg-gray-900 dark:hover:bg-green-950"
+                    class="flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm shadow-sm transition dark:bg-gray-900"
+                    :class="activeMarkerKey === `faskes-${faskes.id}`
+                        ? 'border-green-500 bg-green-100 dark:border-green-500 dark:bg-green-950'
+                        : 'border-green-200 bg-white hover:border-green-400 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950'"
                 >
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">🏥</span>
                     <span class="min-w-0 flex-1">
@@ -151,8 +194,27 @@
                 text-overflow: ellipsis;
                 box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
             }
+            .laporan-marker-label {
+                background: rgba(255, 255, 255, 0.96);
+                color: #b91c1c;
+                font-size: 10px;
+                font-weight: 700;
+                line-height: 1.2;
+                padding: 2px 6px;
+                border-radius: 6px;
+                border: 1px solid #fca5a5;
+                white-space: nowrap;
+                max-width: 96px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            }
+            .named-map-marker {
+                cursor: pointer;
+            }
             .relawan-popup,
-            .faskes-popup {
+            .faskes-popup,
+            .laporan-popup {
                 min-width: 200px;
                 line-height: 1.45;
             }
@@ -166,6 +228,12 @@
                 font-size: 15px;
                 font-weight: 800;
                 color: #166534;
+                margin-bottom: 4px;
+            }
+            .laporan-popup-name {
+                font-size: 15px;
+                font-weight: 800;
+                color: #b91c1c;
                 margin-bottom: 4px;
             }
             @keyframes markerPulse {
@@ -190,6 +258,7 @@
                 lastDataHash: '',
                 lastRadiusHash: '',
                 pollTimer: null,
+                activeMarkerKey: null,
 
                 init() {
                     this.lastUpdated = this.formatTime(this.mapData.updated_at);
@@ -353,7 +422,7 @@
                             if (existing) {
                                 this.animateMarker(existing, [item.latitude, item.longitude]);
                                 existing.setPopupContent(this.buildPopup(type, item));
-                                if (type === 'relawan' || type === 'faskes') {
+                                if (type === 'laporan' || type === 'relawan' || type === 'faskes') {
                                     existing.setIcon(this.createMarkerIcon(type, item));
                                 }
                                 return;
@@ -379,7 +448,36 @@
                     const icon = this.createMarkerIcon(type, item);
                     const marker = L.marker([item.latitude, item.longitude], { icon });
                     marker.bindPopup(this.buildPopup(type, item));
+
+                    if (type === 'laporan' || type === 'relawan' || type === 'faskes') {
+                        marker.on('click', () => this.focusMarker(type, item.id));
+                    }
+
                     return marker;
+                },
+
+                createNamedMarkerIcon(color, emoji, labelClass, labelText, pulse = false) {
+                    const safeText = this.escapeHtml(labelText);
+                    const shortName = safeText.length > 16 ? `${safeText.slice(0, 14)}…` : safeText;
+
+                    const html = `
+                        <div class="named-map-marker" style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                            <div class="${pulse ? 'marker-pulse' : ''}" style="
+                                background:${color};
+                                width:30px;height:30px;border-radius:50%;
+                                display:flex;align-items:center;justify-content:center;
+                                border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);
+                                font-size:14px;
+                            ">${emoji}</div>
+                            <div class="${labelClass}" title="${safeText}">${shortName}</div>
+                        </div>`;
+
+                    return L.divIcon({
+                        html,
+                        className: '',
+                        iconSize: [96, 48],
+                        iconAnchor: [48, 24],
+                    });
                 },
 
                 createMarkerIcon(type, item) {
@@ -399,52 +497,32 @@
                         petugas: '🦺',
                     };
 
+                    if (type === 'laporan') {
+                        return this.createNamedMarkerIcon(
+                            colors.laporan,
+                            icons.laporan,
+                            'laporan-marker-label',
+                            item.label ?? item.title ?? 'Laporan',
+                        );
+                    }
+
                     if (type === 'relawan') {
-                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Relawan');
-                        const shortName = nama.length > 16 ? `${nama.slice(0, 14)}…` : nama;
-
-                        const html = `
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-                                <div class="marker-pulse" style="
-                                    background:${colors.relawan};
-                                    width:30px;height:30px;border-radius:50%;
-                                    display:flex;align-items:center;justify-content:center;
-                                    border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);
-                                    font-size:14px;
-                                ">${icons.relawan}</div>
-                                <div class="relawan-marker-label" title="${nama}">${shortName}</div>
-                            </div>`;
-
-                        return L.divIcon({
-                            html,
-                            className: '',
-                            iconSize: [96, 48],
-                            iconAnchor: [48, 24],
-                        });
+                        return this.createNamedMarkerIcon(
+                            colors.relawan,
+                            icons.relawan,
+                            'relawan-marker-label',
+                            item.title ?? item.label ?? 'Relawan',
+                            true,
+                        );
                     }
 
                     if (type === 'faskes') {
-                        const nama = this.escapeHtml(item.title ?? item.label ?? 'Faskes');
-                        const shortName = nama.length > 16 ? `${nama.slice(0, 14)}…` : nama;
-
-                        const html = `
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-                                <div style="
-                                    background:${colors.faskes};
-                                    width:30px;height:30px;border-radius:50%;
-                                    display:flex;align-items:center;justify-content:center;
-                                    border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);
-                                    font-size:14px;
-                                ">${icons.faskes}</div>
-                                <div class="faskes-marker-label" title="${nama}">${shortName}</div>
-                            </div>`;
-
-                        return L.divIcon({
-                            html,
-                            className: '',
-                            iconSize: [96, 48],
-                            iconAnchor: [48, 24],
-                        });
+                        return this.createNamedMarkerIcon(
+                            colors.faskes,
+                            icons.faskes,
+                            'faskes-marker-label',
+                            item.title ?? item.label ?? 'Faskes',
+                        );
                     }
 
                     const html = `
@@ -465,6 +543,22 @@
                 },
 
                 buildPopup(type, item) {
+                    if (type === 'laporan') {
+                        const jenis = this.escapeHtml(item.label ?? 'Laporan');
+                        const pelapor = this.escapeHtml(item.title ?? '-');
+                        let rows = `<div class="laporan-popup"><div class="laporan-popup-name">⚠️ ${jenis}</div>`;
+                        rows += `<div><b>Pelapor:</b> ${pelapor}</div>`;
+                        if (item.subtitle) rows += `<div><b>Alamat:</b> ${this.escapeHtml(item.subtitle)}</div>`;
+                        if (item.wilayah) rows += `<div><b>Wilayah:</b> ${this.escapeHtml(item.wilayah)}</div>`;
+                        if (item.status_penanganan) rows += `<div><b>Penanganan:</b> ${this.escapeHtml(item.status_penanganan)}</div>`;
+                        if (item.status) rows += `<div><b>Status:</b> ${this.escapeHtml(item.status)}</div>`;
+                        if (item.relawan) rows += `<div><b>Relawan ditugaskan:</b> ${this.escapeHtml(item.relawan)}</div>`;
+                        if (item.tanggal) rows += `<div><b>Waktu kejadian:</b> ${this.escapeHtml(item.tanggal)}</div>`;
+                        if (item.jarak_km != null) rows += `<div><b>Jarak dari pusat:</b> ${item.jarak_km} km</div>`;
+                        rows += `<div style="margin-top:4px;font-size:11px;color:#64748b">${item.latitude?.toFixed(5)}, ${item.longitude?.toFixed(5)}</div></div>`;
+                        return rows;
+                    }
+
                     if (type === 'relawan') {
                         const nama = this.escapeHtml(item.title ?? item.label ?? 'Relawan');
                         let rows = `<div class="relawan-popup"><div class="relawan-popup-name">🧑‍🚒 ${nama}</div>`;
@@ -511,8 +605,9 @@
                     const marker = this.markerRegistry[key];
                     if (!marker || !this.map) return;
 
-                    const targetZoom = Math.max(this.map.getZoom(), 15);
-                    this.map.setView(marker.getLatLng(), targetZoom, { animate: true });
+                    this.activeMarkerKey = key;
+                    const targetZoom = Math.max(this.map.getZoom(), 16);
+                    this.map.flyTo(marker.getLatLng(), targetZoom, { animate: true, duration: 0.75 });
                     marker.openPopup();
                 },
 
