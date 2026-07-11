@@ -7,7 +7,7 @@
     <div id="peta-realtime-data" wire:key="map-{{ $mapData['updated_at'] }}" class="hidden">@json($mapData)</div>
     <div id="peta-realtime-radius" wire:key="radius-{{ $radiusFilter['lat'] }}-{{ $radiusFilter['lng'] }}-{{ $radiusFilter['km'] }}" class="hidden">@json($radiusFilter)</div>
     {{-- Panel Filter --}}
-    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+    <div class="peta-realtime-filter rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
                 <h2 class="text-base font-semibold text-gray-950 dark:text-white">Filter Lokasi</h2>
@@ -19,7 +19,7 @@
                 <button
                     type="button"
                     wire:click="resetFilters"
-                    class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                    class="peta-filter-btn peta-filter-btn-secondary"
                 >
                     Reset Filter
                 </button>
@@ -27,9 +27,9 @@
         </div>
 
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Wilayah</label>
-                <select wire:model.live="wilayahId" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Wilayah</label>
+                <select wire:model.live="wilayahId" class="peta-filter-input">
                     <option value="">Semua Wilayah</option>
                     @foreach ($wilayahOptions as $id => $nama)
                         <option value="{{ $id }}">{{ $nama }}</option>
@@ -37,9 +37,9 @@
                 </select>
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Jenis Kejadian</label>
-                <select wire:model.live="jenisKejadian" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Jenis Kejadian</label>
+                <select wire:model.live="jenisKejadian" class="peta-filter-input">
                     <option value="">Semua Jenis</option>
                     @foreach ($jenisKejadianOptions as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
@@ -47,9 +47,9 @@
                 </select>
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Status Laporan</label>
-                <select wire:model.live="statusLaporan" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Status Laporan</label>
+                <select wire:model.live="statusLaporan" class="peta-filter-input">
                     <option value="">Semua Status</option>
                     @foreach ($statusLaporanOptions as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
@@ -57,9 +57,9 @@
                 </select>
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Status Penanganan</label>
-                <select wire:model.live="statusPenanganan" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Status Penanganan</label>
+                <select wire:model.live="statusPenanganan" class="peta-filter-input">
                     <option value="">Semua Penanganan</option>
                     @foreach ($statusPenangananOptions as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
@@ -67,47 +67,47 @@
                 </select>
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Latitude Pusat</label>
-                <input type="number" step="any" wire:model.live.debounce.500ms="centerLat" placeholder="-3.6954" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Latitude Pusat</label>
+                <input type="number" step="any" wire:model.live.debounce.500ms="centerLat" placeholder="-3.6954" class="peta-filter-input">
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Longitude Pusat</label>
-                <input type="number" step="any" wire:model.live.debounce.500ms="centerLng" placeholder="128.1814" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Longitude Pusat</label>
+                <input type="number" step="any" wire:model.live.debounce.500ms="centerLng" placeholder="128.1814" class="peta-filter-input">
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Radius (km)</label>
-                <input type="number" step="any" min="1" wire:model.live.debounce.500ms="radiusKm" placeholder="10" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Radius (km)</label>
+                <input type="number" step="any" min="1" wire:model.live.debounce.500ms="radiusKm" placeholder="10" class="peta-filter-input">
             </div>
 
-            <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Relawan Aktif (menit)</label>
-                <input type="number" min="1" max="120" wire:model.live.debounce.500ms="relawanStaleMinutes" class="fi-input block w-full rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+            <div class="peta-filter-field">
+                <label class="peta-filter-label">Relawan Aktif (menit)</label>
+                <input type="number" min="1" max="120" wire:model.live.debounce.500ms="relawanStaleMinutes" class="peta-filter-input">
             </div>
         </div>
 
-        <div class="mt-4 flex flex-wrap gap-4 text-sm">
-            <label class="inline-flex items-center gap-2">
-                <input type="checkbox" wire:model.live="tampilkanLaporan" class="rounded border-gray-300 text-primary-600">
-                <span class="inline-flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-red-500"></span> Laporan ({{ $mapData['counts']['laporan'] }})</span>
+        <div class="mt-4 flex flex-wrap gap-3">
+            <label class="peta-filter-checkbox">
+                <input type="checkbox" wire:model.live="tampilkanLaporan">
+                <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span> Laporan ({{ $mapData['counts']['laporan'] }})</span>
             </label>
-            <label class="inline-flex items-center gap-2">
-                <input type="checkbox" wire:model.live="tampilkanRelawan" class="rounded border-gray-300 text-primary-600">
-                <span class="inline-flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-500"></span> Relawan ({{ $mapData['counts']['relawan'] }})</span>
+            <label class="peta-filter-checkbox">
+                <input type="checkbox" wire:model.live="tampilkanRelawan">
+                <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-blue-500"></span> Relawan ({{ $mapData['counts']['relawan'] }})</span>
             </label>
-            <label class="inline-flex items-center gap-2">
-                <input type="checkbox" wire:model.live="tampilkanFaskes" class="rounded border-gray-300 text-primary-600">
-                <span class="inline-flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> Faskes ({{ $mapData['counts']['faskes'] }})</span>
+            <label class="peta-filter-checkbox">
+                <input type="checkbox" wire:model.live="tampilkanFaskes">
+                <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-green-600"></span> Faskes ({{ $mapData['counts']['faskes'] }})</span>
             </label>
-            <label class="inline-flex items-center gap-2">
-                <input type="checkbox" wire:model.live="tampilkanEvakuasi" class="rounded border-gray-300 text-primary-600">
-                <span class="inline-flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-purple-500"></span> Titik Evakuasi ({{ $mapData['counts']['evakuasi'] }})</span>
+            <label class="peta-filter-checkbox">
+                <input type="checkbox" wire:model.live="tampilkanEvakuasi">
+                <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-purple-500"></span> Titik Evakuasi ({{ $mapData['counts']['evakuasi'] }})</span>
             </label>
-            <label class="inline-flex items-center gap-2">
-                <input type="checkbox" wire:model.live="tampilkanPetugas" class="rounded border-gray-300 text-primary-600">
-                <span class="inline-flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-amber-500"></span> Petugas ({{ $mapData['counts']['petugas'] }})</span>
+            <label class="peta-filter-checkbox">
+                <input type="checkbox" wire:model.live="tampilkanPetugas">
+                <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-amber-500"></span> Petugas ({{ $mapData['counts']['petugas'] }})</span>
             </label>
         </div>
     </div>
@@ -143,6 +143,124 @@
             0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
             70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        /* Filter panel — explicit styles (fi-input tidak terdeteksi di custom blade) */
+        .peta-realtime-filter .peta-filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+        .peta-realtime-filter .peta-filter-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1rem;
+            color: rgb(75 85 99);
+        }
+        .dark .peta-realtime-filter .peta-filter-label {
+            color: rgb(209 213 219);
+        }
+        .peta-realtime-filter .peta-filter-input {
+            display: block;
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid rgb(209 213 219);
+            background-color: rgb(255 255 255);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            color: rgb(3 7 18);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .peta-realtime-filter .peta-filter-input:focus {
+            border-color: rgb(245 158 11);
+            box-shadow: 0 0 0 1px rgb(245 158 11);
+        }
+        .dark .peta-realtime-filter .peta-filter-input {
+            border-color: rgb(75 85 99);
+            background-color: rgb(31 41 55);
+            color: rgb(255 255 255);
+        }
+        .dark .peta-realtime-filter .peta-filter-input:focus {
+            border-color: rgb(251 191 36);
+            box-shadow: 0 0 0 1px rgb(251 191 36);
+        }
+        .peta-realtime-filter select.peta-filter-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25rem 1.25rem;
+            padding-right: 2.25rem;
+        }
+        .peta-realtime-filter .peta-filter-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .peta-realtime-filter .peta-filter-btn-secondary {
+            background-color: rgb(243 244 246);
+            color: rgb(55 65 81);
+        }
+        .peta-realtime-filter .peta-filter-btn-secondary:hover {
+            background-color: rgb(229 231 235);
+        }
+        .dark .peta-realtime-filter .peta-filter-btn-secondary {
+            background-color: rgb(31 41 55);
+            color: rgb(229 231 235);
+        }
+        .dark .peta-realtime-filter .peta-filter-btn-secondary:hover {
+            background-color: rgb(55 65 81);
+        }
+        .peta-realtime-filter .peta-filter-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.625rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgb(229 231 235);
+            background-color: rgb(249 250 251);
+            font-size: 0.875rem;
+            color: rgb(55 65 81);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+        .peta-realtime-filter .peta-filter-checkbox:hover {
+            background-color: rgb(243 244 246);
+            border-color: rgb(209 213 219);
+        }
+        .dark .peta-realtime-filter .peta-filter-checkbox {
+            border-color: rgb(55 65 81);
+            background-color: rgb(17 24 39);
+            color: rgb(209 213 219);
+        }
+        .dark .peta-realtime-filter .peta-filter-checkbox:hover {
+            background-color: rgb(31 41 55);
+            border-color: rgb(75 85 99);
+        }
+        .peta-realtime-filter .peta-filter-checkbox input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid rgb(209 213 219);
+            accent-color: rgb(245 158 11);
+            cursor: pointer;
+        }
+        .dark .peta-realtime-filter .peta-filter-checkbox input[type="checkbox"] {
+            border-color: rgb(75 85 99);
+            background-color: rgb(31 41 55);
         }
     </style>
 
