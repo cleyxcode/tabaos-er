@@ -65,9 +65,10 @@ class TestingAmbonSeeder extends Seeder
         $relawan = Relawan::updateOrCreate(
             ['pengguna_id' => $penggunaRelawan->id],
             [
-                'nik'      => '9171031501990001',
+                'umur'      => 28,
                 'alamat'   => 'Jl. Diponegoro No. 12, Sirimau, Kota Ambon',
                 'keahlian' => 'Medis',
+                'organisasi' => 'PMI Kota Ambon',
                 'status'   => 'disetujui',
             ]
         );

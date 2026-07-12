@@ -12,6 +12,13 @@
             <span class="font-medium text-gray-900 dark:text-white">Peta interaktif</span>
             · Terakhir diperbarui: <span class="font-semibold" x-text="lastUpdated"></span>
         </div>
+        <div class="peta-map-legend" aria-label="Legenda peta">
+            <span class="peta-legend-item peta-legend-item--laporan" x-text="`Laporan (${mapData.counts?.laporan ?? 0})`"></span>
+            <span class="peta-legend-item peta-legend-item--relawan" x-text="`Relawan (${mapData.counts?.relawan ?? 0})`"></span>
+            <span class="peta-legend-item peta-legend-item--faskes" x-text="`Faskes (${mapData.counts?.faskes ?? 0})`"></span>
+            <span class="peta-legend-item peta-legend-item--evakuasi" x-text="`Evakuasi (${mapData.counts?.evakuasi ?? 0})`"></span>
+            <span class="peta-legend-item peta-legend-item--petugas" x-text="`Petugas (${mapData.counts?.petugas ?? 0})`"></span>
+        </div>
         <div class="flex flex-wrap gap-2">
             @if ($areaAktif)
                 <button
@@ -26,22 +33,12 @@
     </div>
 
     {{-- Peta --}}
-    <div wire:ignore class="relative">
+    <div wire:ignore class="peta-map-shell">
         <div
             x-ref="mapEl"
-            class="rounded-xl border border-gray-200 shadow-sm dark:border-gray-700"
+            class="peta-map-canvas rounded-xl border border-gray-200 shadow-sm dark:border-gray-700"
             style="height: 620px; width: 100%;"
         ></div>
-        <div class="absolute bottom-3 left-3 z-[1000] rounded-lg bg-white/95 px-3 py-2 text-xs shadow dark:bg-gray-900/95">
-            <div class="font-semibold text-gray-800 dark:text-gray-100">Legenda</div>
-            <div class="mt-1 space-y-0.5 text-gray-600 dark:text-gray-300">
-                <div x-text="`🔴 Laporan (${mapData.counts?.laporan ?? 0})`"></div>
-                <div x-text="`🔵 Relawan (${mapData.counts?.relawan ?? 0})`"></div>
-                <div x-text="`🟢 Faskes (${mapData.counts?.faskes ?? 0})`"></div>
-                <div x-text="`🟣 Titik Evakuasi (${mapData.counts?.evakuasi ?? 0})`"></div>
-                <div x-text="`🟡 Petugas (${mapData.counts?.petugas ?? 0})`"></div>
-            </div>
-        </div>
     </div>
 
     {{-- Panel data di bawah peta --}}
@@ -199,8 +196,73 @@
 
     @once
         <style>
+            .peta-map-shell { position: relative; }
+            .peta-map-canvas { z-index: 0; }
+            .peta-map-legend {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                max-width: 100%;
+            }
+            .peta-legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1.2;
+                white-space: nowrap;
+                border: 1px solid transparent;
+            }
+            .peta-legend-item::before {
+                content: '';
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .peta-legend-item--laporan {
+                background: #fee2e2;
+                color: #b91c1c;
+                border-color: #fecaca;
+            }
+            .peta-legend-item--laporan::before { background: #ef4444; }
+            .peta-legend-item--relawan {
+                background: #dbeafe;
+                color: #1d4ed8;
+                border-color: #bfdbfe;
+            }
+            .peta-legend-item--relawan::before { background: #3b82f6; }
+            .peta-legend-item--faskes {
+                background: #dcfce7;
+                color: #15803d;
+                border-color: #bbf7d0;
+            }
+            .peta-legend-item--faskes::before { background: #16a34a; }
+            .peta-legend-item--evakuasi {
+                background: #f3e8ff;
+                color: #7e22ce;
+                border-color: #e9d5ff;
+            }
+            .peta-legend-item--evakuasi::before { background: #9333ea; }
+            .peta-legend-item--petugas {
+                background: #fef3c7;
+                color: #b45309;
+                border-color: #fde68a;
+            }
+            .peta-legend-item--petugas::before { background: #f59e0b; }
             .leaflet-pane { z-index: 10; }
             .leaflet-top, .leaflet-bottom { z-index: 20; }
+            .leaflet-bottom.leaflet-left,
+            .leaflet-bottom.leaflet-right {
+                margin-bottom: 8px;
+            }
+            .leaflet-bottom.leaflet-left { margin-left: 8px; }
+            .leaflet-bottom.leaflet-right { margin-right: 8px; }
             .marker-pulse {
                 border-radius: 50%;
                 box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);

@@ -178,7 +178,8 @@ class AkunRelawanResource extends Resource
                     }),
 
                 \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                \Filament\Actions\DeleteAction::make()
+                    ->modalDescription('Akun relawan akan dihapus permanen. Laporan bencana yang sedang ditangani relawan ini akan dilepas penugasannya.'),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([

@@ -72,7 +72,7 @@ class SampleDataSeeder extends Seeder
         foreach ($penggunaIds as $penggunaId) {
             $relawanIds[] = DB::table('relawan')->insertGetId([
                 'pengguna_id' => $penggunaId,
-                'nik' => $faker->nik,
+                'umur' => $faker->numberBetween(20, 55),
                 'alamat' => $faker->address,
                 'keahlian' => $faker->randomElement(['Medis', 'Logistik', 'SAR', 'Dapur Umum']),
                 'status' => $faker->randomElement(['pending', 'disetujui', 'ditolak']),
