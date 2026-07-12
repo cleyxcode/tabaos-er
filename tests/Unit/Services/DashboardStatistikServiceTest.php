@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Models\LaporanBencana;
+use App\Models\Pengguna;
 use App\Models\Relawan;
 use App\Models\Wilayah;
 use App\Services\DashboardStatistikService;
@@ -105,15 +106,31 @@ final class DashboardStatistikServiceTest extends TestCase
 
     public function testRelawanOperasiMenghitungStatusRelawan(): void
     {
+        $penggunaA = Pengguna::create([
+            'name' => 'Relawan A',
+            'phone' => '081111111111',
+            'email' => 'relawan-a@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $penggunaB = Pengguna::create([
+            'name' => 'Relawan B',
+            'phone' => '081111111112',
+            'email' => 'relawan-b@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
         Relawan::create([
-            'nik' => '1234567890123456',
+            'pengguna_id' => $penggunaA->id,
+            'umur' => 28,
             'alamat' => 'Ambon',
             'keahlian' => 'Medis',
             'status' => 'disetujui',
         ]);
 
         Relawan::create([
-            'nik' => '1234567890123457',
+            'pengguna_id' => $penggunaB->id,
+            'umur' => 32,
             'alamat' => 'Ambon',
             'keahlian' => 'Logistik',
             'status' => 'pending',

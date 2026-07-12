@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RelawanResource\Pages;
+use App\Filament\Resources\RelawanResource\RelationManagers\AkunRelawanRelationManager;
 use App\Models\Relawan;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -99,6 +100,14 @@ class RelawanResource extends Resource
                 Tables\Columns\TextColumn::make('approver.name')
                     ->label('Reviewer')
                     ->default('-'),
+                Tables\Columns\IconColumn::make('akunRelawan.email')
+                    ->label('Akun App')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray')
+                    ->getStateUsing(fn (Relawan $record): bool => $record->akunRelawan !== null),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -150,6 +159,13 @@ class RelawanResource extends Resource
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelationManagers(): array
+    {
+        return [
+            AkunRelawanRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

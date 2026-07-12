@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 class AmbulansResource extends Resource
 {
     protected static ?string $model = Ambulans::class;
+
+    protected static bool $shouldRegisterNavigation = false;
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
     protected static string | \UnitEnum | null $navigationGroup = 'Direktori';
     protected static ?string $navigationLabel = 'Ambulans';

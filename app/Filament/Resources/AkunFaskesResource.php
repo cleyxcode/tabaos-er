@@ -15,6 +15,8 @@ class AkunFaskesResource extends Resource
 {
     protected static ?string $model = AkunFaskes::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|\BackedEnum|null $navigationIcon  = 'heroicon-o-building-office-2';
     protected static string|\UnitEnum|null   $navigationGroup = 'Manajemen Akun';
     protected static ?string $navigationLabel  = 'Akun Faskes';

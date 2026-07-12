@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\RedirectLivewireGetRequests::class);
+
         $middleware->alias([
             'akun.aktif' => \App\Http\Middleware\AkunAktif::class,
         ]);
@@ -21,6 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->wantsJson(),
         );
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, Request $request) {
+            if (
+                $request->isMethod('GET')
+                && preg_match('#^livewire-[a-f0-9]+/(update|upload)$#', $request->path())
+            ) {
+                return redirect()->to($request->headers->get('referer') ?: url('/admin'));
+            }
+        });
 
         $exceptions->render(function (\Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->wantsJson()) {

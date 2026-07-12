@@ -84,16 +84,9 @@ final class PetaRealtimeService
             $query->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani']);
         }
 
-        if ($filter->hasRadiusFilter()) {
-            $query = $this->haversine->scopeQuery(
-                $query,
-                (float) $filter->centerLat,
-                (float) $filter->centerLng,
-                (float) $filter->radiusKm,
-            );
-        }
+        $items = $query->get();
 
-        return $query->get()->map(fn (LaporanBencana $item): array => [
+        return $this->applyRadiusFilter($items, $filter, fn (LaporanBencana $item): array => [
             'id' => $item->id,
             'type' => 'laporan',
             'latitude' => (float) $item->latitude,

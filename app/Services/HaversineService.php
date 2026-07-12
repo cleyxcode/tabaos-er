@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+
 class HaversineService
 {
     /**
@@ -28,12 +30,24 @@ class HaversineService
      */
     public function scopeQuery($query, float $lat, float $lng, float $radiusKm = 10)
     {
-        return $query->selectRaw('*, ( 6371 * acos(LEAST(1, GREATEST(-1,
-                cos(radians(?)) * cos(radians(latitude))
-                * cos(radians(longitude) - radians(?))
-                + sin(radians(?)) * sin(radians(latitude))
-            )))) AS jarak_km', [$lat, $lng, $lat])
-            ->havingRaw('jarak_km <= ?', [$radiusKm])
+        $acosInput = $this->acosInputExpression();
+        $distanceSql = "( 6371 * acos({$acosInput}))";
+
+        return $query
+            ->selectRaw("*, {$distanceSql} AS jarak_km", [$lat, $lng, $lat])
+            ->whereRaw("{$distanceSql} <= ?", [$lat, $lng, $lat, $radiusKm])
             ->orderBy('jarak_km');
+    }
+
+    private function acosInputExpression(): string
+    {
+        $expression = 'cos(radians(?)) * cos(radians(latitude))
+                * cos(radians(longitude) - radians(?))
+                + sin(radians(?)) * sin(radians(latitude))';
+
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "MIN(1, MAX(-1, {$expression}))",
+            default => "LEAST(1, GREATEST(-1, {$expression}))",
+        };
     }
 }

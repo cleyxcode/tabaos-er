@@ -15,6 +15,8 @@ class AkunRelawanResource extends Resource
 {
     protected static ?string $model = AkunRelawan::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|\BackedEnum|null $navigationIcon  = 'heroicon-o-identification';
     protected static string|\UnitEnum|null   $navigationGroup = 'Manajemen Akun';
     protected static ?string $navigationLabel    = 'Akun Relawan';

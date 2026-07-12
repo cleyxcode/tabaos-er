@@ -14,6 +14,8 @@ use Filament\Tables\Table;
 class PenugasanResource extends Resource
 {
     protected static ?string $model = Penugasan::class;
+
+    protected static bool $shouldRegisterNavigation = false;
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string | \UnitEnum | null $navigationGroup = 'Penanganan Bencana';
     protected static ?string $navigationLabel = 'Penugasan';

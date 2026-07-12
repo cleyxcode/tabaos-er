@@ -26,7 +26,7 @@ final class RelawanRegistrationApiTest extends TestCase
         Sanctum::actingAs($pengguna, [], 'pengguna');
 
         $response = $this->postJson('/api/v1/relawan', [
-            'nik' => '1234567890123456',
+            'umur' => 28,
             'alamat' => 'Jl. Merdeka No. 1, Ambon',
             'keahlian' => 'Medis',
             'organisasi' => 'PMI Ambon',
@@ -34,14 +34,14 @@ final class RelawanRegistrationApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.nik', '1234567890123456')
+            ->assertJsonPath('data.umur', 28)
             ->assertJsonPath('data.keahlian', 'Medis')
             ->assertJsonPath('data.organisasi', 'PMI Ambon')
             ->assertJsonPath('data.status', 'pending');
 
         $this->assertDatabaseHas('relawan', [
             'pengguna_id' => $pengguna->id,
-            'nik' => '1234567890123456',
+            'umur' => 28,
             'organisasi' => 'PMI Ambon',
             'status' => 'pending',
         ]);
@@ -59,7 +59,7 @@ final class RelawanRegistrationApiTest extends TestCase
         Sanctum::actingAs($pengguna, [], 'pengguna');
 
         $this->postJson('/api/v1/relawan', [
-            'nik' => '9876543210987654',
+            'umur' => 25,
             'alamat' => 'Ambon',
             'keahlian' => 'Evakuasi',
         ])->assertCreated();
@@ -81,7 +81,7 @@ final class RelawanRegistrationApiTest extends TestCase
 
         Relawan::create([
             'pengguna_id' => $pengguna->id,
-            'nik' => '1111111111111111',
+            'umur' => 30,
             'alamat' => 'Ambon',
             'keahlian' => 'Medis',
             'status' => 'pending',
@@ -90,7 +90,7 @@ final class RelawanRegistrationApiTest extends TestCase
         Sanctum::actingAs($pengguna, [], 'pengguna');
 
         $this->postJson('/api/v1/relawan', [
-            'nik' => '2222222222222222',
+            'umur' => 31,
             'alamat' => 'Ambon',
             'keahlian' => 'Logistik',
         ])->assertStatus(409);

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FaskesResource\Pages;
+use App\Filament\Resources\FaskesResource\RelationManagers\AkunFaskesRelationManager;
 use App\Filament\Resources\FaskesResource\RelationManagers\AmbulansRelationManager;
 use App\Models\Faskes;
 use Dotswan\MapPicker\Fields\Map;
@@ -146,6 +147,7 @@ class FaskesResource extends Resource
     {
         return [
             AmbulansRelationManager::class,
+            AkunFaskesRelationManager::class,
         ];
     }
 

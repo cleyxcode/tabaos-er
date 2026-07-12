@@ -69,17 +69,28 @@ class NotifikasiService
     public function kirimPush(string $token, string $title, string $body, array $data = []): void
     {
         try {
+            $stringData = collect($data)
+                ->map(fn ($value) => is_scalar($value) ? (string) $value : json_encode($value))
+                ->all();
+
             Http::withHeaders([
                 'Authorization' => 'key=' . config('services.fcm.server_key'),
                 'Content-Type'  => 'application/json',
             ])->post('https://fcm.googleapis.com/fcm/send', [
                 'to' => $token,
+                'priority' => 'high',
+                'content_available' => true,
                 'notification' => [
                     'title' => $title,
                     'body'  => $body,
                     'sound' => 'default',
+                    'android_channel_id' => 'tabaos_admin',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                 ],
-                'data' => $data,
+                'data' => array_merge($stringData, [
+                    'title' => $title,
+                    'body' => $body,
+                ]),
             ]);
         } catch (\Exception $e) {
             Log::error('FCM gagal kirim: ' . $e->getMessage());
