@@ -5,8 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Hash;
@@ -14,12 +14,18 @@ use Illuminate\Support\Facades\Hash;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
+
     protected static string | \UnitEnum | null $navigationGroup = 'Pengaturan';
-    protected static ?string $navigationLabel = 'Staff & Admin';
+
+    protected static ?string $navigationLabel = 'Kelola Admin';
+
     protected static ?int $navigationSort = 50;
-    protected static ?string $modelLabel = 'User (Staff)';
-    protected static ?string $pluralModelLabel = 'Users (Staff)';
+
+    protected static ?string $modelLabel = 'Admin';
+
+    protected static ?string $pluralModelLabel = 'Admin';
 
     public static function form(Schema $form): Schema
     {
@@ -29,7 +35,7 @@ class UserResource extends Resource
                 ->required()
                 ->maxLength(255),
             Forms\Components\TextInput::make('email')
-                ->label('Email')
+                ->label('Email Login')
                 ->email()
                 ->required()
                 ->maxLength(255)
@@ -43,13 +49,8 @@ class UserResource extends Resource
                 ->password()
                 ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                 ->dehydrated(fn ($state) => filled($state))
-                ->required(fn (string $context): bool => $context === 'create'),
-            Forms\Components\Select::make('roles')
-                ->label('Role Akses')
-                ->relationship('roles', 'name')
-                ->multiple()
-                ->preload()
-                ->searchable(),
+                ->required(fn (string $context): bool => $context === 'create')
+                ->helperText('Kosongkan jika tidak ingin mengubah password.'),
         ]);
     }
 
@@ -64,22 +65,27 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->label('Roles')
-                    ->badge(),
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telepon'),
-            ])
-            ->filters([
-                //
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                \Filament\Actions\DeleteAction::make()
+                    ->visible(fn (User $record): bool => $record->id !== auth()->id()),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                    \Filament\Actions\DeleteBulkAction::make()
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                            $records
+                                ->reject(fn (User $record): bool => $record->id === auth()->id())
+                                ->each->delete();
+                        }),
                 ]),
             ]);
     }

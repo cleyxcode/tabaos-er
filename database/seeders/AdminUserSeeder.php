@@ -13,12 +13,10 @@ class AdminUserSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
-                'name' => 'Super Admin',
+                'name' => 'Admin',
                 'password' => Hash::make('password'),
                 'phone' => '081234567890',
             ]
         );
-
-        $admin->assignRole('super_admin');
     }
 }
