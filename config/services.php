@@ -36,7 +36,21 @@ return [
     ],
 
     'fcm' => [
-        'server_key' => env('FCM_SERVER_KEY'),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'tabaos-aca40'),
+        'credentials' => value(function (): ?string {
+            $path = env('FIREBASE_CREDENTIALS');
+            if (! is_string($path) || $path === '') {
+                return null;
+            }
+
+            if ($path[0] === DIRECTORY_SEPARATOR) {
+                return $path;
+            }
+
+            return base_path($path);
+        }),
+        // Opsional — hanya jika pakai Firebase Realtime Database (FCM push tidak wajib).
+        'database_url' => env('FIREBASE_DATABASE_URL'),
     ],
 
 ];

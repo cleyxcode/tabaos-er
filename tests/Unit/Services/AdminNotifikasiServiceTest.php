@@ -15,9 +15,8 @@ use App\Models\Relawan;
 use App\Models\User;
 use App\Models\Wilayah;
 use App\Services\AdminNotifikasiService;
-use App\Services\HaversineService;
-use App\Services\NotifikasiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -30,8 +29,30 @@ final class AdminNotifikasiServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Http::fake(['https://fcm.googleapis.com/*' => Http::response(['success' => 1])]);
-        $this->service = new AdminNotifikasiService(new NotifikasiService(new HaversineService));
+
+        config([
+            'services.fcm.project_id' => 'tabaos-test',
+            'services.fcm.credentials' => base_path('tests/fixtures/firebase-service-account.json'),
+        ]);
+
+        Http::fake([
+            'https://oauth2.googleapis.com/token' => Http::response([
+                'access_token' => 'test-access-token',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+            ]),
+            'https://fcm.googleapis.com/v1/*' => Http::response([
+                'name' => 'projects/tabaos-test/messages/test-message-id',
+            ]),
+        ]);
+
+        Cache::put(
+            'fcm_v1_access_token_' . sha1('firebase-adminsdk-test@tabaos-test.iam.gserviceaccount.com'),
+            'test-access-token',
+            3600,
+        );
+
+        $this->service = app(AdminNotifikasiService::class);
     }
 
     public function testKirimKeRelawanDanFaskesAktif(): void
@@ -90,7 +111,7 @@ final class AdminNotifikasiServiceTest extends TestCase
         $this->assertSame('terkirim', $notifikasi->status);
         $this->assertSame(2, $notifikasi->jumlah_penerima);
         $this->assertSame(2, NotifikasiAdminPenerima::count());
-        Http::assertSentCount(2);
+        Http::assertSentCount(2, fn ($request): bool => str_contains($request->url(), '/messages:send'));
     }
 
     public function testStatusGagalJikaTidakAdaPenerima(): void
@@ -159,6 +180,6 @@ final class AdminNotifikasiServiceTest extends TestCase
         $this->assertSame('terkirim', $notifikasi->status);
         $this->assertSame(1, $notifikasi->jumlah_penerima);
         $this->assertSame([$akunA->id], $notifikasi->akun_relawan_ids);
-        Http::assertSentCount(1);
+        Http::assertSentCount(1, fn ($request): bool => str_contains($request->url(), '/messages:send'));
     }
 }

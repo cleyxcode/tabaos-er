@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Models\RelawanNotifikasi;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class NotifikasiService
 {
-    public function __construct(protected HaversineService $haversine) {}
+    public function __construct(
+        protected HaversineService $haversine,
+        protected FcmV1Client $fcm,
+    ) {}
 
     /**
      * Kirim notifikasi ke semua relawan aktif dalam radius dari lokasi laporan.
@@ -34,14 +35,15 @@ class NotifikasiService
                     (float) $akun->latitude,
                     (float) $akun->longitude,
                 );
+
                 return $jarak <= $radiusKm;
             });
 
         foreach ($relawanTerdekat as $akun) {
             RelawanNotifikasi::create([
                 'akun_relawan_id' => $akun->id,
-                'laporan_id'      => $laporan->id,
-                'sudah_dibaca'    => false,
+                'laporan_id' => $laporan->id,
+                'sudah_dibaca' => false,
             ]);
 
             $this->kirimFcm(
@@ -50,7 +52,7 @@ class NotifikasiService
                 body: "Ada laporan {$laporan->jenis_kejadian} di dekat lokasi kamu.",
                 data: [
                     'laporan_id' => (string) $laporan->id,
-                    'type'       => 'laporan_baru',
+                    'type' => 'laporan_baru',
                 ],
             );
         }
@@ -62,38 +64,12 @@ class NotifikasiService
     }
 
     /**
-     * Kirim push notification via FCM ke satu perangkat.
+     * Kirim push notification via FCM HTTP v1 ke satu perangkat.
      *
      * @param  array<string, string>  $data
      */
     public function kirimPush(string $token, string $title, string $body, array $data = []): void
     {
-        try {
-            $stringData = collect($data)
-                ->map(fn ($value) => is_scalar($value) ? (string) $value : json_encode($value))
-                ->all();
-
-            Http::withHeaders([
-                'Authorization' => 'key=' . config('services.fcm.server_key'),
-                'Content-Type'  => 'application/json',
-            ])->post('https://fcm.googleapis.com/fcm/send', [
-                'to' => $token,
-                'priority' => 'high',
-                'content_available' => true,
-                'notification' => [
-                    'title' => $title,
-                    'body'  => $body,
-                    'sound' => 'default',
-                    'android_channel_id' => 'tabaos_admin',
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                ],
-                'data' => array_merge($stringData, [
-                    'title' => $title,
-                    'body' => $body,
-                ]),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('FCM gagal kirim: ' . $e->getMessage());
-        }
+        $this->fcm->sendToDevice($token, $title, $body, $data);
     }
 }
