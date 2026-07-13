@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\AdminPesanController;
 
 Route::prefix('v1/relawan-auth')->middleware('throttle:api')->group(function () {
     Route::post('login', [RelawanAuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('forgot-password', [RelawanAuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+    Route::post('reset-password', [RelawanAuthController::class, 'resetPassword'])->middleware('throttle:5,1');
     Route::middleware('auth:akun_relawan')->group(function () {
         Route::post('logout', [RelawanAuthController::class, 'logout']);
         Route::get('me',     [RelawanAuthController::class, 'me']);
@@ -48,6 +50,8 @@ Route::prefix('v1/relawan')
 
 Route::prefix('v1/faskes-auth')->middleware('throttle:api')->group(function () {
     Route::post('login', [FaskesAuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('forgot-password', [FaskesAuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+    Route::post('reset-password', [FaskesAuthController::class, 'resetPassword'])->middleware('throttle:5,1');
     Route::middleware('auth:akun_faskes')->group(function () {
         Route::post('logout', [FaskesAuthController::class, 'logout']);
         Route::get('me',     [FaskesAuthController::class, 'me']);

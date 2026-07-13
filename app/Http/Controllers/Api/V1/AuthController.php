@@ -13,10 +13,7 @@ use App\Models\Pengguna;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\OtpMail;
-use Carbon\Carbon;
+use App\Services\OtpPasswordResetService;
 
 class AuthController extends Controller
 {
@@ -87,56 +84,26 @@ class AuthController extends Controller
         );
     }
 
-    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    public function forgotPassword(ForgotPasswordRequest $request, OtpPasswordResetService $otpService): JsonResponse
     {
-        $otp = (string) rand(100000, 999999);
-
-        DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $request->email],
-            [
-                'token'      => $otp,
-                'created_at' => now(),
-            ]
-        );
-
-        Mail::to($request->email)->send(new OtpMail($otp));
+        $otpService->sendOtp($request->email, 'pengguna', Pengguna::class);
 
         return $this->success(null, 'Kode OTP telah dikirim ke email Anda.');
     }
 
-    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    public function resetPassword(ResetPasswordRequest $request, OtpPasswordResetService $otpService): JsonResponse
     {
-        $resetRequest = DB::table('password_reset_tokens')
-            ->where('email', $request->email)
-            ->where('token', $request->otp)
-            ->first();
-
-        if (! $resetRequest) {
-            return $this->error('Kode OTP tidak valid.', 400);
+        try {
+            $otpService->resetPassword(
+                $request->email,
+                $request->otp,
+                $request->password,
+                'pengguna',
+                Pengguna::class,
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 400);
         }
-
-        // Cek apakah OTP sudah expired (10 menit)
-        if (Carbon::parse($resetRequest->created_at)->addMinutes(10)->isPast()) {
-            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-            return $this->error('Kode OTP sudah kedaluwarsa.', 400);
-        }
-
-        $pengguna = Pengguna::where('email', $request->email)->first();
-
-        if (! $pengguna) {
-            return $this->error('Pengguna tidak ditemukan.', 404);
-        }
-
-        // password akan otomatis di hash karena ada casts => ['password' => 'hashed'] di Model Pengguna
-        $pengguna->update([
-            'password' => $request->password,
-        ]);
-
-        // Revoke all old tokens just in case
-        $pengguna->tokens()->delete();
-
-        // Hapus token reset setelah berhasil
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return $this->success(null, 'Password berhasil diubah. Silakan login dengan password baru.');
     }
