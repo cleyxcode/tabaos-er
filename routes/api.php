@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\RelawanOperasionalController;
 use App\Http\Controllers\Api\FaskesAuthController;
 use App\Http\Controllers\Api\FaskesOperasionalController;
 use App\Http\Controllers\Api\AdminPesanController;
+use App\Http\Controllers\Api\V1\Admin\RelawanVerifikasiController;
 
 // =============================================================================
 // ROUTE RELAWAN & FASKES — harus didaftarkan SEBELUM route publik faskes/{id}
@@ -70,6 +71,15 @@ Route::prefix('v1/faskes')
         Route::get('pesan-admin',           [AdminPesanController::class, 'indexFaskes']);
         Route::get('pesan-admin/{id}',      [AdminPesanController::class, 'showFaskes'])->whereNumber('id');
         Route::put('pesan-admin/{id}/baca', [AdminPesanController::class, 'tandaiBacaFaskes'])->whereNumber('id');
+    });
+
+Route::prefix('v1/admin')
+    ->middleware(['throttle:api', 'admin.api'])
+    ->group(function () {
+        Route::post('relawan/{relawan}/verifikasi', [RelawanVerifikasiController::class, 'verifikasi'])
+            ->whereNumber('relawan');
+        Route::post('relawan/{relawan}/tolak', [RelawanVerifikasiController::class, 'tolak'])
+            ->whereNumber('relawan');
     });
 
 Route::prefix('v1')->middleware('throttle:api')->group(function () {

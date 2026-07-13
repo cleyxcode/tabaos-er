@@ -42,10 +42,22 @@ class AuthController extends Controller
         $field = $request->filled('phone') ? 'phone' : 'email';
         $value = $request->input($field);
 
-        $pengguna = Pengguna::where($field, $value)->first();
+        $pengguna = Pengguna::with('relawan.akunRelawan')->where($field, $value)->first();
 
         if (! $pengguna || ! Hash::check($request->password, $pengguna->password)) {
             return $this->error('Nomor telepon/email atau password salah.', 401);
+        }
+
+        // Blokir login masyarakat jika sudah diverifikasi menjadi relawan
+        if (
+            $pengguna->relawan
+            && $pengguna->relawan->status === 'disetujui'
+            && $pengguna->relawan->akunRelawan
+        ) {
+            return $this->error(
+                'Akun Anda sudah ditingkatkan menjadi relawan. Silakan login melalui tab Relawan di halaman masuk.',
+                403
+            );
         }
 
         // Revoke all old tokens and issue fresh one

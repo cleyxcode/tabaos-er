@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\RedirectLivewireGetRequests::class);
 
         $middleware->alias([
-            'akun.aktif' => \App\Http\Middleware\AkunAktif::class,
+            'akun.aktif'   => \App\Http\Middleware\AkunAktif::class,
+            'admin.api'    => \App\Http\Middleware\VerifyAdminApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

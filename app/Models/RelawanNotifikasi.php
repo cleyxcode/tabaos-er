@@ -10,6 +10,9 @@ class RelawanNotifikasi extends Model
 
     protected $fillable = [
         'akun_relawan_id',
+        'jenis',
+        'judul',
+        'pesan',
         'laporan_id',
         'sudah_dibaca',
         'dibaca_at',

@@ -258,6 +258,9 @@ class RelawanOperasionalController extends Controller
             'success'      => true,
             'data'         => collect($notifikasi->items())->map(fn (RelawanNotifikasi $n) => [
                 'id'           => $n->id,
+                'jenis'        => $n->jenis ?? 'laporan',
+                'judul'        => $n->judul,
+                'pesan'        => $n->pesan,
                 'sudah_dibaca' => $n->sudah_dibaca,
                 'created_at'   => $n->created_at?->toISOString(),
                 'laporan'      => $n->laporan ? [

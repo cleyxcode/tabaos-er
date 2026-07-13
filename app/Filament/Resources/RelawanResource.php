@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\RelawanResource\Pages;
 use App\Filament\Resources\RelawanResource\RelationManagers\AkunRelawanRelationManager;
 use App\Models\Relawan;
+use App\Services\RelawanVerifikasiService;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -126,14 +127,20 @@ class RelawanResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn (Relawan $record): bool => $record->status === 'pending')
                     ->action(function (Relawan $record): void {
-                        $record->update([
-                            'status' => 'disetujui',
-                            'approved_by' => Auth::id(),
-                        ]);
-                        Notification::make()
-                            ->title('Relawan disetujui')
-                            ->success()
-                            ->send();
+                        try {
+                            app(RelawanVerifikasiService::class)->verifikasi($record, (int) Auth::id());
+                            Notification::make()
+                                ->title('Relawan disetujui')
+                                ->body('Akun relawan telah dibuat. Pengguna harus login melalui tab Relawan.')
+                                ->success()
+                                ->send();
+                        } catch (\InvalidArgumentException $e) {
+                            Notification::make()
+                                ->title('Gagal menyetujui relawan')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 \Filament\Actions\Action::make('tolak')
                     ->label('Tolak')
@@ -142,14 +149,19 @@ class RelawanResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn (Relawan $record): bool => $record->status === 'pending')
                     ->action(function (Relawan $record): void {
-                        $record->update([
-                            'status' => 'ditolak',
-                            'approved_by' => Auth::id(),
-                        ]);
-                        Notification::make()
-                            ->title('Relawan ditolak')
-                            ->danger()
-                            ->send();
+                        try {
+                            app(RelawanVerifikasiService::class)->tolak($record, (int) Auth::id());
+                            Notification::make()
+                                ->title('Relawan ditolak')
+                                ->danger()
+                                ->send();
+                        } catch (\InvalidArgumentException $e) {
+                            Notification::make()
+                                ->title('Gagal menolak relawan')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 \Filament\Actions\EditAction::make(),
                 \Filament\Actions\DeleteAction::make(),

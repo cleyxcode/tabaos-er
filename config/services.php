@@ -35,6 +35,10 @@ return [
         ],
     ],
 
+    'admin_api' => [
+        'key' => env('ADMIN_API_KEY'),
+    ],
+
     'fcm' => [
         'project_id' => env('FIREBASE_PROJECT_ID', 'tabaos-aca40'),
         'credentials' => value(function (): ?string {

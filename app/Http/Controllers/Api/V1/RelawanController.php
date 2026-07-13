@@ -53,7 +53,7 @@ class RelawanController extends Controller
         }
 
         return $this->success(
-            new RelawanResource($relawan),
+            new RelawanResource($relawan->load(['pengguna', 'akunRelawan'])),
             'Status relawan berhasil diambil.'
         );
     }

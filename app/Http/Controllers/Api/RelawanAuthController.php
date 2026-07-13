@@ -10,7 +10,6 @@ use App\Services\OtpPasswordResetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class RelawanAuthController extends Controller
 {
@@ -24,9 +23,11 @@ class RelawanAuthController extends Controller
         $akun = AkunRelawan::where('email', $request->email)->first();
 
         if (! $akun || ! Hash::check($request->password, $akun->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Email atau password salah.'],
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Email atau password salah.',
+                'errors'  => ['email' => ['Email atau password salah.']],
+            ], 401);
         }
 
         if ($akun->status !== 'aktif') {
