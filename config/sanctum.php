@@ -38,7 +38,7 @@ return [
     */
 
     // Hanya guard session — jangan masukkan guard ber-driver sanctum
-    // (akun_relawan/akun_faskes) karena memicu infinite recursion.
+    // (akun_relawan) karena memicu infinite recursion.
     'guard' => ['web'],
 
     /*

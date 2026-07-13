@@ -13,14 +13,11 @@ use App\Http\Controllers\Api\V1\TitikEvakuasiController;
 use App\Http\Controllers\Api\V1\WilayahController;
 use App\Http\Controllers\Api\RelawanAuthController;
 use App\Http\Controllers\Api\RelawanOperasionalController;
-use App\Http\Controllers\Api\FaskesAuthController;
-use App\Http\Controllers\Api\FaskesOperasionalController;
 use App\Http\Controllers\Api\AdminPesanController;
 use App\Http\Controllers\Api\V1\Admin\RelawanVerifikasiController;
 
 // =============================================================================
-// ROUTE RELAWAN & FASKES — harus didaftarkan SEBELUM route publik faskes/{id}
-// agar path seperti /faskes/laporan tidak tertangkap sebagai {faskes}=laporan
+// ROUTE RELAWAN — didaftarkan sebelum route publik faskes/{id}
 // =============================================================================
 
 Route::prefix('v1/relawan-auth')->middleware('throttle:api')->group(function () {
@@ -48,30 +45,6 @@ Route::prefix('v1/relawan')
         Route::get('pesan-admin',              [AdminPesanController::class, 'indexRelawan']);
         Route::get('pesan-admin/{id}',         [AdminPesanController::class, 'showRelawan'])->whereNumber('id');
         Route::put('pesan-admin/{id}/baca',    [AdminPesanController::class, 'tandaiBacaRelawan'])->whereNumber('id');
-    });
-
-Route::prefix('v1/faskes-auth')->middleware('throttle:api')->group(function () {
-    Route::post('login', [FaskesAuthController::class, 'login'])->middleware('throttle:10,1');
-    Route::post('forgot-password', [FaskesAuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
-    Route::post('reset-password', [FaskesAuthController::class, 'resetPassword'])->middleware('throttle:5,1');
-    Route::middleware('auth:akun_faskes')->group(function () {
-        Route::post('logout', [FaskesAuthController::class, 'logout']);
-        Route::get('me',     [FaskesAuthController::class, 'me']);
-    });
-});
-
-Route::prefix('v1/faskes')
-    ->middleware(['throttle:api', 'auth:akun_faskes', 'akun.aktif:akun_faskes'])
-    ->group(function () {
-        Route::post('fcm-token',   [FaskesOperasionalController::class, 'updateFcmToken']);
-        Route::get('laporan',      [FaskesOperasionalController::class, 'laporan']);
-        Route::get('laporan/{id}', [FaskesOperasionalController::class, 'detailLaporan'])->whereNumber('id');
-        Route::get('peta',         [FaskesOperasionalController::class, 'dataPeta']);
-        Route::get('profil',       [FaskesOperasionalController::class, 'profil']);
-        Route::get('notifikasi',   [FaskesOperasionalController::class, 'notifikasi']);
-        Route::get('pesan-admin',           [AdminPesanController::class, 'indexFaskes']);
-        Route::get('pesan-admin/{id}',      [AdminPesanController::class, 'showFaskes'])->whereNumber('id');
-        Route::put('pesan-admin/{id}/baca', [AdminPesanController::class, 'tandaiBacaFaskes'])->whereNumber('id');
     });
 
 Route::prefix('v1/admin')

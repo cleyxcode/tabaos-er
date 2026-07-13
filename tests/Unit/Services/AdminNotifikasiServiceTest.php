@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\DTO\KirimNotifikasiAdminDTO;
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
-use App\Models\Faskes;
 use App\Models\NotifikasiAdmin;
 use App\Models\NotifikasiAdminPenerima;
 use App\Models\Pengguna;
 use App\Models\Relawan;
 use App\Models\User;
-use App\Models\Wilayah;
 use App\Services\AdminNotifikasiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +52,7 @@ final class AdminNotifikasiServiceTest extends TestCase
         $this->service = app(AdminNotifikasiService::class);
     }
 
-    public function testKirimKeRelawanDanFaskesAktif(): void
+    public function testKirimKeRelawanAktif(): void
     {
         $admin = User::factory()->create();
 
@@ -78,40 +75,19 @@ final class AdminNotifikasiServiceTest extends TestCase
             'status' => 'aktif',
         ]);
 
-        $wilayah = Wilayah::create(['nama' => 'Ambon', 'kecamatan' => 'Sirimau', 'kota' => 'Ambon']);
-        $faskes = Faskes::create([
-            'wilayah_id' => $wilayah->id,
-            'nama' => 'RSUD',
-            'tipe' => 'rumah_sakit',
-            'alamat' => 'Ambon',
-            'latitude' => -3.69,
-            'longitude' => 128.18,
-        ]);
-
-        AkunFaskes::create([
-            'faskes_id' => $faskes->id,
-            'nama_petugas' => 'Petugas',
-            'email' => 'faskes@test.com',
-            'password' => bcrypt('secret'),
-            'fcm_token' => 'token-faskes',
-            'status' => 'aktif',
-        ]);
-
         $notifikasi = $this->service->buatDanKirim(new KirimNotifikasiAdminDTO(
             adminId: $admin->id,
             judul: 'Pengumuman',
             pesan: 'Mohon siaga penuh hari ini.',
             gambar: null,
             kirimKeRelawan: true,
-            kirimKeFaskes: true,
             kirimSemuaRelawan: true,
-            kirimSemuaFaskes: true,
         ));
 
         $this->assertSame('terkirim', $notifikasi->status);
-        $this->assertSame(2, $notifikasi->jumlah_penerima);
-        $this->assertSame(2, NotifikasiAdminPenerima::count());
-        Http::assertSentCount(2, fn ($request): bool => str_contains($request->url(), '/messages:send'));
+        $this->assertSame(1, $notifikasi->jumlah_penerima);
+        $this->assertSame(1, NotifikasiAdminPenerima::count());
+        Http::assertSentCount(1, fn ($request): bool => str_contains($request->url(), '/messages:send'));
     }
 
     public function testStatusGagalJikaTidakAdaPenerima(): void
@@ -124,7 +100,6 @@ final class AdminNotifikasiServiceTest extends TestCase
             pesan: 'Test pesan',
             gambar: null,
             kirimKeRelawan: true,
-            kirimKeFaskes: false,
             kirimSemuaRelawan: true,
         ));
 
@@ -172,7 +147,6 @@ final class AdminNotifikasiServiceTest extends TestCase
             pesan: 'Hanya untuk relawan A.',
             gambar: null,
             kirimKeRelawan: true,
-            kirimKeFaskes: false,
             kirimSemuaRelawan: false,
             akunRelawanIds: [$akunA->id],
         ));

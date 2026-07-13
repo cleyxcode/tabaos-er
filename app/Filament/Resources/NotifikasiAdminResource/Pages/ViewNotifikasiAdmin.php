@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\NotifikasiAdminResource\Pages;
 
 use App\Filament\Resources\NotifikasiAdminResource;
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\NotifikasiAdmin;
 use Filament\Infolists\Components\ImageEntry;
@@ -57,14 +56,6 @@ final class ViewNotifikasiAdmin extends ViewRecord
                         ->state(fn (NotifikasiAdmin $record): string => self::formatRelawanTarget($record))
                         ->visible(fn (NotifikasiAdmin $record): bool => $record->kirim_ke_relawan)
                         ->columnSpanFull(),
-                    TextEntry::make('kirim_ke_faskes')
-                        ->label('Faskes')
-                        ->formatStateUsing(fn (bool $state): string => $state ? 'Ya' : 'Tidak'),
-                    TextEntry::make('faskes_target')
-                        ->label('Cakupan Faskes')
-                        ->state(fn (NotifikasiAdmin $record): string => self::formatFaskesTarget($record))
-                        ->visible(fn (NotifikasiAdmin $record): bool => $record->kirim_ke_faskes)
-                        ->columnSpanFull(),
                 ])->columns(2),
         ]);
     }
@@ -85,25 +76,6 @@ final class ViewNotifikasiAdmin extends ViewRecord
             ->whereIn('id', $ids)
             ->get()
             ->map(fn (AkunRelawan $akun): string => NotifikasiAdminResource::labelAkunRelawan($akun))
-            ->join(', ');
-    }
-
-    private static function formatFaskesTarget(NotifikasiAdmin $record): string
-    {
-        if ($record->kirim_semua_faskes) {
-            return 'Semua akun faskes aktif';
-        }
-
-        $ids = $record->akun_faskes_ids ?? [];
-        if ($ids === []) {
-            return '-';
-        }
-
-        return AkunFaskes::query()
-            ->with('faskes')
-            ->whereIn('id', $ids)
-            ->get()
-            ->map(fn (AkunFaskes $akun): string => NotifikasiAdminResource::labelAkunFaskes($akun))
             ->join(', ');
     }
 }

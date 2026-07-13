@@ -38,12 +38,6 @@ final class SumberDayaStats extends BaseWidget
                 ->color('info')
                 ->url(FaskesResource::getUrl('index')),
 
-            Stat::make('Akun Faskes Aktif', $stats['akun_faskes_aktif'])
-                ->description('Petugas faskes siap operasi')
-                ->descriptionIcon('heroicon-m-user-circle', IconPosition::Before)
-                ->icon('heroicon-o-user-circle')
-                ->color('primary'),
-
             Stat::make('Ambulans Tersedia', $stats['ambulans_tersedia'])
                 ->description("{$stats['ambulans_total']} total armada ambulans")
                 ->descriptionIcon('heroicon-m-truck', IconPosition::Before)

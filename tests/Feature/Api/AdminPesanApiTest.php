@@ -39,7 +39,6 @@ final class AdminPesanApiTest extends TestCase
             'judul' => 'Info Penting',
             'pesan' => 'Harap update lokasi secara berkala.',
             'kirim_ke_relawan' => true,
-            'kirim_ke_faskes' => false,
             'status' => 'terkirim',
             'jumlah_penerima' => 1,
             'dikirim_at' => now(),

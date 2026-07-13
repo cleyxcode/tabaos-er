@@ -14,7 +14,7 @@ final class CreateNotifikasiAdmin extends CreateRecord
 {
     protected static string $resource = NotifikasiAdminResource::class;
 
-    protected static ?string $title = 'Kirim Pesan ke Relawan & Faskes';
+    protected static ?string $title = 'Kirim Pesan ke Relawan';
 
     protected function getCreateFormAction(): \Filament\Actions\Action
     {
@@ -33,10 +33,10 @@ final class CreateNotifikasiAdmin extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (empty($data['kirim_ke_relawan']) && empty($data['kirim_ke_faskes'])) {
+        if (empty($data['kirim_ke_relawan'])) {
             Notification::make()
-                ->title('Pilih minimal satu penerima')
-                ->body('Aktifkan Relawan dan/atau Faskes sebagai penerima pesan.')
+                ->title('Pilih penerima relawan')
+                ->body('Aktifkan Relawan sebagai penerima pesan.')
                 ->danger()
                 ->send();
 
@@ -47,16 +47,6 @@ final class CreateNotifikasiAdmin extends CreateRecord
             Notification::make()
                 ->title('Pilih akun relawan')
                 ->body('Nonaktifkan "Semua akun relawan aktif" lalu pilih minimal satu akun.')
-                ->danger()
-                ->send();
-
-            throw new Halt;
-        }
-
-        if (! empty($data['kirim_ke_faskes']) && empty($data['kirim_semua_faskes']) && empty($data['akun_faskes_ids'])) {
-            Notification::make()
-                ->title('Pilih akun faskes')
-                ->body('Nonaktifkan "Semua akun faskes aktif" lalu pilih minimal satu akun.')
                 ->danger()
                 ->send();
 

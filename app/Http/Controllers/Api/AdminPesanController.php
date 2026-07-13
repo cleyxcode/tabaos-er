@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\PesanAdminResource;
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\NotifikasiAdminPenerima;
 use Illuminate\Http\JsonResponse;
@@ -37,33 +36,6 @@ final class AdminPesanController extends Controller
     {
         /** @var AkunRelawan $akun */
         $akun = $request->user('akun_relawan');
-
-        return $this->tandaiBaca($akun::class, $akun->id, $id);
-    }
-
-    // GET /faskes/pesan-admin
-    public function indexFaskes(Request $request): JsonResponse
-    {
-        /** @var AkunFaskes $akun */
-        $akun = $request->user('akun_faskes');
-
-        return $this->indexForPenerima($akun::class, $akun->id);
-    }
-
-    // GET /faskes/pesan-admin/{id}
-    public function showFaskes(Request $request, int $id): JsonResponse
-    {
-        /** @var AkunFaskes $akun */
-        $akun = $request->user('akun_faskes');
-
-        return $this->showForPenerima($akun::class, $akun->id, $id);
-    }
-
-    // PUT /faskes/pesan-admin/{id}/baca
-    public function tandaiBacaFaskes(Request $request, int $id): JsonResponse
-    {
-        /** @var AkunFaskes $akun */
-        $akun = $request->user('akun_faskes');
 
         return $this->tandaiBaca($akun::class, $akun->id, $id);
     }

@@ -6,7 +6,6 @@ namespace App\Filament\Resources;
 
 use App\DTO\KirimNotifikasiAdminDTO;
 use App\Filament\Resources\NotifikasiAdminResource\Pages;
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\NotifikasiAdmin;
 use App\Services\AdminNotifikasiService;
@@ -26,7 +25,7 @@ final class NotifikasiAdminResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Komunikasi';
 
-    protected static ?string $navigationLabel = 'Pesan ke Relawan & Faskes';
+    protected static ?string $navigationLabel = 'Pesan ke Relawan';
 
     protected static ?int $navigationSort = 1;
 
@@ -38,7 +37,7 @@ final class NotifikasiAdminResource extends Resource
     {
         return $form->schema([
             \Filament\Schemas\Components\Section::make('Isi Pesan')
-                ->description('Pesan akan langsung dikirim ke akun relawan dan/atau faskes yang dipilih.')
+                ->description('Pesan akan langsung dikirim ke akun relawan yang dipilih.')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->schema([
                     Forms\Components\TextInput::make('judul')
@@ -98,40 +97,6 @@ final class NotifikasiAdminResource extends Resource
                         ->columnSpanFull(),
                 ])->columns(1),
 
-            \Filament\Schemas\Components\Section::make('Penerima Faskes')
-                ->icon('heroicon-o-building-office-2')
-                ->schema([
-                    Forms\Components\Toggle::make('kirim_ke_faskes')
-                        ->label('Kirim ke Faskes')
-                        ->default(true)
-                        ->live(),
-
-                    Forms\Components\Toggle::make('kirim_semua_faskes')
-                        ->label('Semua akun faskes aktif')
-                        ->default(true)
-                        ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => (bool) $get('kirim_ke_faskes'))
-                        ->live(),
-
-                    Forms\Components\Select::make('akun_faskes_ids')
-                        ->label('Pilih akun faskes tertentu')
-                        ->multiple()
-                        ->searchable()
-                        ->preload()
-                        ->options(fn (): array => AkunFaskes::query()
-                            ->where('status', 'aktif')
-                            ->with('faskes')
-                            ->orderBy('email')
-                            ->get()
-                            ->mapWithKeys(fn (AkunFaskes $akun): array => [
-                                $akun->id => self::labelAkunFaskes($akun),
-                            ])
-                            ->all())
-                        ->helperText('Kosongkan opsi "Semua" lalu pilih satu atau lebih akun faskes.')
-                        ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => (bool) $get('kirim_ke_faskes') && ! $get('kirim_semua_faskes'))
-                        ->required(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => (bool) $get('kirim_ke_faskes') && ! $get('kirim_semua_faskes'))
-                        ->columnSpanFull(),
-                ])->columns(1),
-
             \Filament\Schemas\Components\Section::make('Metadata')
                 ->schema([
                     Forms\Components\Hidden::make('admin_id')
@@ -162,12 +127,6 @@ final class NotifikasiAdminResource extends Resource
                     ->state(fn (NotifikasiAdmin $record): string => ! $record->kirim_ke_relawan
                         ? '-'
                         : ($record->kirim_semua_relawan ? 'Semua' : 'Tertentu')),
-
-                Tables\Columns\TextColumn::make('cakupan_faskes')
-                    ->label('Faskes')
-                    ->state(fn (NotifikasiAdmin $record): string => ! $record->kirim_ke_faskes
-                        ? '-'
-                        : ($record->kirim_semua_faskes ? 'Semua' : 'Tertentu')),
 
                 Tables\Columns\TextColumn::make('jumlah_penerima')
                     ->label('Penerima')
@@ -240,11 +199,8 @@ final class NotifikasiAdminResource extends Resource
             pesan: $data['pesan'],
             gambar: $gambar,
             kirimKeRelawan: (bool) ($data['kirim_ke_relawan'] ?? false),
-            kirimKeFaskes: (bool) ($data['kirim_ke_faskes'] ?? false),
             kirimSemuaRelawan: (bool) ($data['kirim_semua_relawan'] ?? true),
-            kirimSemuaFaskes: (bool) ($data['kirim_semua_faskes'] ?? true),
             akunRelawanIds: array_map('intval', $data['akun_relawan_ids'] ?? []),
-            akunFaskesIds: array_map('intval', $data['akun_faskes_ids'] ?? []),
         );
 
         return app(AdminNotifikasiService::class)->buatDanKirim($dto);
@@ -255,12 +211,5 @@ final class NotifikasiAdminResource extends Resource
         $nama = $akun->relawan?->pengguna?->name ?? 'Relawan';
 
         return "{$nama} — {$akun->email}";
-    }
-
-    public static function labelAkunFaskes(AkunFaskes $akun): string
-    {
-        $faskes = $akun->faskes?->nama ?? 'Faskes';
-
-        return "{$akun->nama_petugas} ({$faskes}) — {$akun->email}";
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\Ambulans;
 use App\Models\Faskes;
@@ -50,9 +49,6 @@ class AmbonDemoSeeder extends Seeder
 
     /** @var array<int, Faskes> */
     private array $faskes = [];
-
-    /** @var array<int, AkunFaskes> */
-    private array $akunFaskes = [];
 
     /** @var array<int, LaporanBencana> */
     private array $laporan = [];
@@ -261,15 +257,6 @@ class AmbonDemoSeeder extends Seeder
             );
 
             $this->faskes[] = $faskes;
-            $this->akunFaskes[] = AkunFaskes::updateOrCreate(
-                ['email' => $item['email']],
-                [
-                    'faskes_id' => $faskes->id,
-                    'nama_petugas' => $item['petugas'],
-                    'password' => Hash::make(self::PASSWORD),
-                    'status' => 'aktif',
-                ],
-            );
         }
     }
 
@@ -528,22 +515,17 @@ class AmbonDemoSeeder extends Seeder
             [
                 'judul' => 'Koordinasi Evakuasi Sirimau',
                 'pesan' => 'Titik evakuasi Lapangan Merdeka sudah dibuka. Faskes dimohon siapkan tempat tidur darurat.',
-                'relawan' => true, 'faskes' => true, 'semua_relawan' => true, 'semua_faskes' => true,
+                'relawan' => true, 'semua_relawan' => true,
             ],
             [
                 'judul' => 'Briefing Relawan PMI',
                 'pesan' => 'Briefing koordinasi relawan PMI Ambon pukul 08.00 WIT di kantor PMI.',
-                'relawan' => true, 'faskes' => false, 'semua_relawan' => true, 'semua_faskes' => false,
-            ],
-            [
-                'judul' => 'Stok Obat Darurat',
-                'pesan' => 'RSUD Dr. Haulussy membutuhkan stok obat antiseptis tambahan untuk penanganan korban luka.',
-                'relawan' => false, 'faskes' => true, 'semua_relawan' => false, 'semua_faskes' => true,
+                'relawan' => true, 'semua_relawan' => true,
             ],
             [
                 'judul' => 'Update Laporan Banjir Merdeka',
                 'pesan' => 'Laporan banjir di Lapangan Merdeka sedang ditangani. Relawan terdekat dimohon bantu evakuasi warga.',
-                'relawan' => true, 'faskes' => false, 'semua_relawan' => false, 'semua_faskes' => false,
+                'relawan' => true, 'semua_relawan' => false,
             ],
         ];
 
@@ -552,21 +534,14 @@ class AmbonDemoSeeder extends Seeder
                 ? collect($this->akunRelawan)->pluck('id')->all()
                 : [collect($this->akunRelawan)->pluck('id')->first()];
 
-            $akunFaskesIds = $item['semua_faskes']
-                ? collect($this->akunFaskes)->pluck('id')->all()
-                : [collect($this->akunFaskes)->pluck('id')->first()];
-
             $notifikasi = NotifikasiAdmin::updateOrCreate(
                 ['judul' => $item['judul']],
                 [
                     'admin_id' => $this->admin?->id ?? 1,
                     'pesan' => $item['pesan'],
                     'kirim_ke_relawan' => $item['relawan'],
-                    'kirim_ke_faskes' => $item['faskes'],
                     'kirim_semua_relawan' => $item['semua_relawan'],
-                    'kirim_semua_faskes' => $item['semua_faskes'],
                     'akun_relawan_ids' => $item['relawan'] && ! $item['semua_relawan'] ? $akunRelawanIds : null,
-                    'akun_faskes_ids' => $item['faskes'] && ! $item['semua_faskes'] ? $akunFaskesIds : null,
                     'status' => 'terkirim',
                     'jumlah_penerima' => 0,
                     'dikirim_at' => now()->subHours(6 - $index),
@@ -590,27 +565,6 @@ class AmbonDemoSeeder extends Seeder
                         [
                             'sudah_dibaca' => $index % 3 === 0,
                             'dibaca_at' => $index % 3 === 0 ? now()->subHours(1) : null,
-                        ],
-                    );
-                    $penerimaCount++;
-                }
-            }
-
-            if ($item['faskes']) {
-                $targets = $item['semua_faskes'] ? $this->akunFaskes : [AkunFaskes::find($akunFaskesIds[0])];
-                foreach ($targets as $akun) {
-                    if (! $akun) {
-                        continue;
-                    }
-                    NotifikasiAdminPenerima::updateOrCreate(
-                        [
-                            'notifikasi_admin_id' => $notifikasi->id,
-                            'penerima_type' => AkunFaskes::class,
-                            'penerima_id' => $akun->id,
-                        ],
-                        [
-                            'sudah_dibaca' => $index % 2 === 0,
-                            'dibaca_at' => $index % 2 === 0 ? now()->subHours(2) : null,
                         ],
                     );
                     $penerimaCount++;

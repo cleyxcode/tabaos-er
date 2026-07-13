@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FaskesResource\Pages;
-use App\Filament\Resources\FaskesResource\RelationManagers\AkunFaskesRelationManager;
 use App\Filament\Resources\FaskesResource\RelationManagers\AmbulansRelationManager;
 use App\Filament\Support\WilayahAdminSupport;
 use App\Models\Faskes;
@@ -157,7 +156,6 @@ class FaskesResource extends Resource
     {
         return [
             AmbulansRelationManager::class,
-            AkunFaskesRelationManager::class,
         ];
     }
 

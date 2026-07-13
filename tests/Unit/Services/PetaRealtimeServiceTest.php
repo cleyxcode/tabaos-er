@@ -29,7 +29,10 @@ final class PetaRealtimeServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new PetaRealtimeService(new HaversineService);
+        $this->service = new PetaRealtimeService(
+            new HaversineService,
+            app(WilayahLokasiService::class),
+        );
     }
 
     public function testGetDataReturnsAllMarkerTypes(): void

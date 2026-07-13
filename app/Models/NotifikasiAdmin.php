@@ -18,11 +18,8 @@ class NotifikasiAdmin extends Model
         'pesan',
         'gambar',
         'kirim_ke_relawan',
-        'kirim_ke_faskes',
         'kirim_semua_relawan',
-        'kirim_semua_faskes',
         'akun_relawan_ids',
-        'akun_faskes_ids',
         'status',
         'jumlah_penerima',
         'dikirim_at',
@@ -32,11 +29,8 @@ class NotifikasiAdmin extends Model
     {
         return [
             'kirim_ke_relawan' => 'boolean',
-            'kirim_ke_faskes' => 'boolean',
             'kirim_semua_relawan' => 'boolean',
-            'kirim_semua_faskes' => 'boolean',
             'akun_relawan_ids' => 'array',
-            'akun_faskes_ids' => 'array',
             'jumlah_penerima' => 'integer',
             'dikirim_at' => 'datetime',
         ];

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\Ambulans;
 use App\Models\Faskes;
@@ -131,7 +130,6 @@ final class DashboardStatistikService
             'faskes_rs' => (int) ($faskesTipe['rumah_sakit'] ?? 0),
             'faskes_puskesmas' => (int) ($faskesTipe['puskesmas'] ?? 0),
             'faskes_apotek' => (int) ($faskesTipe['apotek'] ?? 0),
-            'akun_faskes_aktif' => AkunFaskes::where('status', 'aktif')->count(),
             'ambulans_total' => Ambulans::count(),
             'ambulans_tersedia' => Ambulans::where('status', 'tersedia')->count(),
             'petugas_aktif' => PetugasEmergency::where('status', 'aktif')->count(),

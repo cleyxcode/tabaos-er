@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\Faskes;
 use App\Models\LaporanBencana;
@@ -96,16 +95,6 @@ class TestingAmbonSeeder extends Seeder
                 'longitude'       => 128.1850,
                 'nomor_telepon'   => '09113411234',
                 'jam_operasional' => '24 Jam',
-            ]
-        );
-
-        AkunFaskes::updateOrCreate(
-            ['email' => 'faskes.ambon@test.com'],
-            [
-                'faskes_id'    => $faskes->id,
-                'nama_petugas' => 'Dr. Sari Wijaya',
-                'password'     => Hash::make(self::PASSWORD),
-                'status'       => 'aktif',
             ]
         );
 

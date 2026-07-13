@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
-use App\Models\Faskes;
 use App\Models\Pengguna;
 use App\Models\Relawan;
 use App\Models\Wilayah;

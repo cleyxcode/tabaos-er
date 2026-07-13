@@ -50,10 +50,6 @@ return [
             'driver'   => 'sanctum',
             'provider' => 'akun_relawan',
         ],
-        'akun_faskes' => [
-            'driver'   => 'sanctum',
-            'provider' => 'akun_faskes',
-        ],
     ],
 
     /*
@@ -85,10 +81,6 @@ return [
         'akun_relawan' => [
             'driver' => 'eloquent',
             'model'  => App\Models\AkunRelawan::class,
-        ],
-        'akun_faskes' => [
-            'driver' => 'eloquent',
-            'model'  => App\Models\AkunFaskes::class,
         ],
     ],
 

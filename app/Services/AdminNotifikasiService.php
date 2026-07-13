@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\KirimNotifikasiAdminDTO;
-use App\Models\AkunFaskes;
 use App\Models\AkunRelawan;
 use App\Models\NotifikasiAdmin;
 use App\Models\NotifikasiAdminPenerima;
@@ -23,7 +22,7 @@ final class AdminNotifikasiService
     public function buatDanKirim(KirimNotifikasiAdminDTO $dto): NotifikasiAdmin
     {
         if (! $dto->hasTarget()) {
-            throw new \InvalidArgumentException('Pilih minimal satu penerima relawan atau faskes.');
+            throw new \InvalidArgumentException('Pilih minimal satu penerima relawan.');
         }
 
         $notifikasi = NotifikasiAdmin::create([
@@ -32,14 +31,9 @@ final class AdminNotifikasiService
             'pesan' => $dto->pesan,
             'gambar' => $dto->gambar,
             'kirim_ke_relawan' => $dto->kirimKeRelawan,
-            'kirim_ke_faskes' => $dto->kirimKeFaskes,
             'kirim_semua_relawan' => $dto->kirimSemuaRelawan,
-            'kirim_semua_faskes' => $dto->kirimSemuaFaskes,
             'akun_relawan_ids' => $dto->kirimKeRelawan && ! $dto->kirimSemuaRelawan
                 ? array_values($dto->akunRelawanIds)
-                : null,
-            'akun_faskes_ids' => $dto->kirimKeFaskes && ! $dto->kirimSemuaFaskes
-                ? array_values($dto->akunFaskesIds)
                 : null,
             'status' => 'draft',
         ]);
@@ -59,10 +53,6 @@ final class AdminNotifikasiService
 
                 if ($notifikasi->kirim_ke_relawan) {
                     $total += $this->kirimKeRelawan($notifikasi);
-                }
-
-                if ($notifikasi->kirim_ke_faskes) {
-                    $total += $this->kirimKeFaskes($notifikasi);
                 }
 
                 $notifikasi->update([
@@ -98,19 +88,8 @@ final class AdminNotifikasiService
         return $this->distribusi($notifikasi, $query->get(), AkunRelawan::class);
     }
 
-    private function kirimKeFaskes(NotifikasiAdmin $notifikasi): int
-    {
-        $query = AkunFaskes::query()->where('status', 'aktif');
-
-        if (! $notifikasi->kirim_semua_faskes && filled($notifikasi->akun_faskes_ids)) {
-            $query->whereIn('id', $notifikasi->akun_faskes_ids);
-        }
-
-        return $this->distribusi($notifikasi, $query->get(), AkunFaskes::class);
-    }
-
     /**
-     * @param  Collection<int, AkunRelawan>|Collection<int, AkunFaskes>  $akunList
+     * @param  Collection<int, AkunRelawan>  $akunList
      */
     private function distribusi(NotifikasiAdmin $notifikasi, Collection $akunList, string $penerimaType): int
     {
