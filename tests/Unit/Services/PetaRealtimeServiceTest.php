@@ -16,6 +16,7 @@ use App\Models\Wilayah;
 use App\Models\ZonaRawanBencana;
 use App\Services\HaversineService;
 use App\Services\PetaRealtimeService;
+use App\Services\WilayahLokasiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

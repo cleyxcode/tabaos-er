@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LaporanBencanaResource\Pages;
 use App\Filament\Resources\LaporanBencanaResource\RelationManagers\PenugasanRelationManager;
 use App\Filament\Support\LaporanLokasiTable;
+use App\Filament\Support\WilayahAdminSupport;
 use App\Models\LaporanBencana;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -68,7 +69,7 @@ class LaporanBencanaResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('wilayah_id')
                         ->label('Wilayah')
-                        ->relationship('wilayah', 'nama')
+                        ->options(fn (): array => WilayahAdminSupport::wilayahOptions())
                         ->searchable()
                         ->preload()
                         ->nullable(),
@@ -79,7 +80,10 @@ class LaporanBencanaResource extends Resource
                     Map::make('location')
                         ->label('Pinpoint Lokasi (Peta)')
                         ->columnSpanFull()
-                        ->defaultLocation(latitude: -3.6954, longitude: 128.1814)
+                        ->defaultLocation(
+                            latitude: WilayahAdminSupport::PUSAT_INDONESIA_LAT,
+                            longitude: WilayahAdminSupport::PUSAT_INDONESIA_LNG,
+                        )
                         ->draggable()
                         ->clickable(true)
                         ->zoom(13)
@@ -242,6 +246,14 @@ class LaporanBencanaResource extends Resource
                     ->searchable()
                     ->badge()
                     ->color('danger'),
+                Tables\Columns\TextColumn::make('wilayah.provinsi')
+                    ->label('Provinsi')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('wilayah.kota')
+                    ->label('Kota')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('wilayah.nama')
                     ->label('Wilayah')
                     ->searchable()
@@ -290,9 +302,7 @@ class LaporanBencanaResource extends Resource
                         'ditangani' => 'Ditangani',
                         'selesai' => 'Selesai',
                     ]),
-                Tables\Filters\SelectFilter::make('wilayah_id')
-                    ->label('Wilayah')
-                    ->relationship('wilayah', 'nama'),
+                ...WilayahAdminSupport::tableFilters('wilayah'),
                 Tables\Filters\TernaryFilter::make('memiliki_koordinat')
                     ->label('Koordinat GPS')
                     ->trueLabel('Ada koordinat')

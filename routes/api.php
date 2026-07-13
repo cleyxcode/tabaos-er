@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\RelawanController;
 use App\Http\Controllers\Api\V1\PedomanBhdController;
 use App\Http\Controllers\Api\V1\ZonaRawanBencanaController;
 use App\Http\Controllers\Api\V1\TitikEvakuasiController;
+use App\Http\Controllers\Api\V1\WilayahController;
 use App\Http\Controllers\Api\RelawanAuthController;
 use App\Http\Controllers\Api\RelawanOperasionalController;
 use App\Http\Controllers\Api\FaskesAuthController;
@@ -102,6 +103,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
     // Publik — tanpa login
     Route::get('petugas-emergency', [PetugasEmergencyController::class, 'index']);
+    Route::get('wilayah/lokasi', [WilayahController::class, 'deteksiLokasi']);
     Route::get('faskes', [FaskesController::class, 'index']);
     Route::get('faskes/{faskes}', [FaskesController::class, 'show'])->whereNumber('faskes');
     Route::get('ambulans', [AmbulansController::class, 'index']);

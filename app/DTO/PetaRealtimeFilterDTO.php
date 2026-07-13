@@ -8,6 +8,8 @@ final readonly class PetaRealtimeFilterDTO
 {
     public function __construct(
         public ?int $wilayahId = null,
+        public ?string $provinsi = null,
+        public ?string $kota = null,
         public ?string $jenisKejadian = null,
         public ?string $statusLaporan = null,
         public ?string $statusPenanganan = null,
@@ -31,6 +33,8 @@ final readonly class PetaRealtimeFilterDTO
             wilayahId: isset($data['wilayahId']) && $data['wilayahId'] !== ''
                 ? (int) $data['wilayahId']
                 : null,
+            provinsi: self::nullableString($data['provinsi'] ?? null),
+            kota: self::nullableString($data['kota'] ?? null),
             jenisKejadian: self::nullableString($data['jenisKejadian'] ?? null),
             statusLaporan: self::nullableString($data['statusLaporan'] ?? null),
             statusPenanganan: self::nullableString($data['statusPenanganan'] ?? null),

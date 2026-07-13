@@ -2,60 +2,51 @@
 
 namespace App\Services;
 
-use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Models\RelawanNotifikasi;
 
 class NotifikasiService
 {
     public function __construct(
-        protected HaversineService $haversine,
+        protected RelawanPenugasanService $penugasan,
         protected FcmV1Client $fcm,
     ) {}
 
     /**
-     * Kirim notifikasi ke semua relawan aktif dalam radius dari lokasi laporan.
+     * Tugaskan laporan ke satu relawan terdekat dan kirim notifikasi hanya ke relawan tersebut.
      * Dipanggil dari LaporanBencanaObserver::created().
      */
-    public function kirimKeRelawanTerdekat(LaporanBencana $laporan, float $radiusKm = 10): void
+    public function kirimKeRelawanTerdekat(LaporanBencana $laporan, float $radiusKm = 500): void
     {
         if (! $laporan->latitude || ! $laporan->longitude) {
             return;
         }
 
-        $relawanTerdekat = AkunRelawan::where('status', 'aktif')
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->whereNotNull('fcm_token')
-            ->get()
-            ->filter(function (AkunRelawan $akun) use ($laporan, $radiusKm) {
-                $jarak = $this->haversine->hitungJarak(
-                    (float) $laporan->latitude,
-                    (float) $laporan->longitude,
-                    (float) $akun->latitude,
-                    (float) $akun->longitude,
-                );
+        $akun = $this->penugasan->tugaskanRelawanTerdekat($laporan, $radiusKm);
 
-                return $jarak <= $radiusKm;
-            });
-
-        foreach ($relawanTerdekat as $akun) {
-            RelawanNotifikasi::create([
-                'akun_relawan_id' => $akun->id,
-                'laporan_id' => $laporan->id,
-                'sudah_dibaca' => false,
-            ]);
-
-            $this->kirimFcm(
-                token: $akun->fcm_token,
-                title: 'Laporan Bencana Baru',
-                body: "Ada laporan {$laporan->jenis_kejadian} di dekat lokasi kamu.",
-                data: [
-                    'laporan_id' => (string) $laporan->id,
-                    'type' => 'laporan_baru',
-                ],
-            );
+        if ($akun === null) {
+            return;
         }
+
+        RelawanNotifikasi::create([
+            'akun_relawan_id' => $akun->id,
+            'laporan_id' => $laporan->id,
+            'sudah_dibaca' => false,
+        ]);
+
+        if (blank($akun->fcm_token)) {
+            return;
+        }
+
+        $this->kirimFcm(
+            token: $akun->fcm_token,
+            title: 'Laporan Bencana Baru',
+            body: "Ada laporan {$laporan->jenis_kejadian} di dekat lokasi kamu.",
+            data: [
+                'laporan_id' => (string) $laporan->id,
+                'type' => 'laporan_baru',
+            ],
+        );
     }
 
     protected function kirimFcm(string $token, string $title, string $body, array $data = []): void

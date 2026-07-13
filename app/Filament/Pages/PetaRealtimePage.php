@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\DTO\PetaRealtimeFilterDTO;
+use App\Filament\Support\WilayahAdminSupport;
 use App\Models\Wilayah;
 use App\Services\PetaRealtimeService;
 use BackedEnum;
@@ -20,10 +21,6 @@ use UnitEnum;
 
 final class PetaRealtimePage extends Page
 {
-    private const PUSAT_AMBON_LAT = -3.6954;
-
-    private const PUSAT_AMBON_LNG = 128.1814;
-
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-map';
 
     protected static string | UnitEnum | null $navigationGroup = 'Penanganan Bencana';
@@ -35,6 +32,10 @@ final class PetaRealtimePage extends Page
     protected static ?int $navigationSort = 0;
 
     protected static ?string $slug = 'peta-realtime';
+
+    public ?string $provinsi = null;
+
+    public ?string $kota = null;
 
     public ?int $wilayahId = null;
 
@@ -66,6 +67,41 @@ final class PetaRealtimePage extends Page
     public function content(Schema $schema): Schema
     {
         return $schema->components([
+            Section::make('Filter Wilayah')
+                ->description('Saring data per provinsi, kota, atau wilayah tertentu. Mendukung multi-provinsi.')
+                ->icon('heroicon-o-globe-asia-australia')
+                ->schema([
+                    Forms\Components\Select::make('provinsi')
+                        ->label('Provinsi')
+                        ->placeholder('Semua provinsi')
+                        ->options(fn (): array => WilayahAdminSupport::provinsiOptions())
+                        ->searchable()
+                        ->live()
+                        ->afterStateUpdated(function (): void {
+                            $this->kota = null;
+                            $this->wilayahId = null;
+                        }),
+
+                    Forms\Components\Select::make('kota')
+                        ->label('Kota/Kabupaten')
+                        ->placeholder('Semua kota')
+                        ->options(fn (Get $get): array => WilayahAdminSupport::kotaOptions($get('provinsi')))
+                        ->searchable()
+                        ->live()
+                        ->afterStateUpdated(fn () => $this->wilayahId = null),
+
+                    Forms\Components\Select::make('wilayahId')
+                        ->label('Wilayah')
+                        ->placeholder('Semua wilayah')
+                        ->options(fn (Get $get): array => WilayahAdminSupport::wilayahOptions(
+                            $get('provinsi'),
+                            $get('kota'),
+                        ))
+                        ->searchable()
+                        ->live(),
+                ])
+                ->columns(['default' => 1, 'md' => 3]),
+
             Section::make('Filter Data')
                 ->description('Saring laporan dan titik yang ditampilkan di peta. Data diperbarui otomatis setiap 5 detik.')
                 ->icon('heroicon-o-funnel')
@@ -77,13 +113,6 @@ final class PetaRealtimePage extends Page
                         ->action('resetFilters'),
                 ])
                 ->schema([
-                    Forms\Components\Select::make('wilayahId')
-                        ->label('Wilayah')
-                        ->placeholder('Semua wilayah')
-                        ->options(fn (): array => Wilayah::query()->orderBy('nama')->pluck('nama', 'id')->all())
-                        ->searchable()
-                        ->live(),
-
                     Forms\Components\Select::make('jenisKejadian')
                         ->label('Jenis Kejadian')
                         ->placeholder('Semua jenis')
@@ -129,10 +158,10 @@ final class PetaRealtimePage extends Page
                         ->default(30)
                         ->live(),
                 ])
-                ->columns(['default' => 1, 'md' => 2, 'xl' => 3]),
+                ->columns(['default' => 1, 'md' => 2, 'xl' => 4]),
 
             Section::make('Area Tampilan')
-                ->description('Opsional. Batasi data hanya di sekitar satu titik — tanpa perlu mengisi koordinat manual.')
+                ->description('Opsional. Batasi data hanya di sekitar satu titik.')
                 ->icon('heroicon-o-map-pin')
                 ->schema([
                     Forms\Components\Select::make('jarakArea')
@@ -147,10 +176,10 @@ final class PetaRealtimePage extends Page
                         ->live()
                         ->afterStateUpdated(function (?string $state): void {
                             if (filled($state) && blank($this->centerLat)) {
-                                $this->setPusatAmbon();
+                                $this->setPusatDariFilterWilayah();
                             }
                         })
-                        ->helperText('Pilih jarak, lalu tentukan titik pusat dengan tombol di bawah atau dari peta.')
+                        ->helperText('Pilih jarak, lalu tentukan titik pusat dari filter wilayah atau peta.')
                         ->columnSpanFull(),
 
                     Forms\Components\Placeholder::make('pusat_area_info')
@@ -160,11 +189,11 @@ final class PetaRealtimePage extends Page
                         ->columnSpanFull(),
 
                     SchemaActions::make([
-                        Action::make('pusatAmbon')
-                            ->label('Gunakan pusat Kota Ambon')
-                            ->icon('heroicon-o-building-office-2')
+                        Action::make('pusatWilayah')
+                            ->label('Gunakan pusat filter wilayah')
+                            ->icon('heroicon-o-map-pin')
                             ->color('primary')
-                            ->action('setPusatAmbon'),
+                            ->action('setPusatDariFilterWilayah'),
                     ])
                         ->visible(fn (Get $get): bool => filled($get('jarakArea')))
                         ->columnSpanFull(),
@@ -201,6 +230,7 @@ final class PetaRealtimePage extends Page
                     'mapData' => $this->getMapData(),
                     'radiusFilter' => $this->getRadiusFilterForMap(),
                     'areaAktif' => filled($this->jarakArea),
+                    'mapCenter' => $this->getMapCenter(),
                 ]),
         ]);
     }
@@ -214,9 +244,6 @@ final class PetaRealtimePage extends Page
     }
 
     /**
-     * Dipanggil dari Alpine setInterval — hanya mengembalikan JSON peta
-     * tanpa me-render ulang seluruh halaman Filament.
-     *
      * @return array<string, mixed>
      */
     public function refreshMapData(): array
@@ -227,6 +254,8 @@ final class PetaRealtimePage extends Page
     public function resetFilters(): void
     {
         $this->reset([
+            'provinsi',
+            'kota',
             'wilayahId',
             'jenisKejadian',
             'statusLaporan',
@@ -244,9 +273,10 @@ final class PetaRealtimePage extends Page
         $this->relawanStaleMinutes = 30;
     }
 
-    public function setPusatAmbon(): void
+    public function setPusatDariFilterWilayah(): void
     {
-        $this->setPusatDariPeta(self::PUSAT_AMBON_LAT, self::PUSAT_AMBON_LNG);
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        $this->setPusatDariPeta($center['lat'], $center['lng']);
     }
 
     public function setPusatDariPeta(float $lat, float $lng): void
@@ -262,17 +292,48 @@ final class PetaRealtimePage extends Page
         }
 
         if (blank($this->centerLat) || blank($this->centerLng)) {
-            return 'Belum ditentukan. Klik "Gunakan pusat Kota Ambon" atau tombol di peta.';
+            return 'Belum ditentukan. Klik "Gunakan pusat filter wilayah" atau tombol di peta.';
+        }
+
+        if ($this->wilayahId !== null) {
+            $wilayah = Wilayah::find($this->wilayahId);
+
+            return $wilayah?->label_lengkap ?? 'Wilayah terpilih';
+        }
+
+        if ($this->kota !== null && $this->provinsi !== null) {
+            return "{$this->kota}, {$this->provinsi}";
+        }
+
+        if ($this->provinsi !== null) {
+            return "Provinsi {$this->provinsi}";
         }
 
         $lat = round((float) $this->centerLat, 4);
         $lng = round((float) $this->centerLng, 4);
 
-        if (abs($lat - self::PUSAT_AMBON_LAT) < 0.0001 && abs($lng - self::PUSAT_AMBON_LNG) < 0.0001) {
-            return 'Kota Ambon (pusat default)';
+        return "Koordinat: {$lat}, {$lng}";
+    }
+
+    /**
+     * @return array{lat: float, lng: float, zoom: int}
+     */
+    public function getMapCenter(): array
+    {
+        if (filled($this->jarakArea) && filled($this->centerLat) && filled($this->centerLng)) {
+            return [
+                'lat' => (float) $this->centerLat,
+                'lng' => (float) $this->centerLng,
+                'zoom' => match ((int) $this->jarakArea) {
+                    5 => 13,
+                    10 => 12,
+                    20 => 11,
+                    default => 10,
+                },
+            ];
         }
 
-        return "Koordinat: {$lat}, {$lng}";
+        return WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
     }
 
     /**
@@ -284,8 +345,9 @@ final class PetaRealtimePage extends Page
             return ['lat' => null, 'lng' => null, 'km' => null];
         }
 
-        $lat = $this->centerLat ?? (string) self::PUSAT_AMBON_LAT;
-        $lng = $this->centerLng ?? (string) self::PUSAT_AMBON_LNG;
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        $lat = $this->centerLat ?? (string) $center['lat'];
+        $lng = $this->centerLng ?? (string) $center['lng'];
 
         return [
             'lat' => $lat,
@@ -297,15 +359,18 @@ final class PetaRealtimePage extends Page
     private function buildFilter(): PetaRealtimeFilterDTO
     {
         $radiusKm = filled($this->jarakArea) ? (float) $this->jarakArea : null;
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
         $centerLat = filled($this->jarakArea)
-            ? (float) ($this->centerLat ?? self::PUSAT_AMBON_LAT)
+            ? (float) ($this->centerLat ?? $center['lat'])
             : null;
         $centerLng = filled($this->jarakArea)
-            ? (float) ($this->centerLng ?? self::PUSAT_AMBON_LNG)
+            ? (float) ($this->centerLng ?? $center['lng'])
             : null;
 
         return PetaRealtimeFilterDTO::fromArray([
             'wilayahId' => $this->wilayahId,
+            'provinsi' => $this->provinsi,
+            'kota' => $this->kota,
             'jenisKejadian' => $this->jenisKejadian,
             'statusLaporan' => $this->statusLaporan,
             'statusPenanganan' => $this->statusPenanganan,

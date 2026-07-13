@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\FaskesRingkasResource;
 use App\Http\Resources\Api\FaskesResource;
 use App\Models\Faskes;
+use App\Services\WilayahLokasiService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,43 +15,53 @@ class FaskesController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(protected WilayahLokasiService $wilayahLokasi) {}
+
+    /**
+     * GET /api/v1/faskes — fasilitas kesehatan di kota pengguna (nama & alamat saja).
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = Faskes::with(['wilayah', 'ambulans']);
+        $request->validate([
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+            'kota' => 'nullable|string|max:100',
+            'wilayah_id' => 'nullable|integer|exists:wilayah,id',
+            'search' => 'nullable|string|max:100',
+        ]);
 
-        if ($request->filled('tipe')) {
-            $query->where('tipe', $request->tipe);
-        }
+        $query = Faskes::with('wilayah');
 
         if ($request->filled('wilayah_id')) {
             $query->where('wilayah_id', $request->wilayah_id);
         }
 
         if ($request->filled('search')) {
-            $query->where('nama', 'like', '%' . $request->search . '%');
+            $query->where('nama', 'like', '%'.$request->search.'%');
         }
 
-        $faskes = $query->get();
+        $kota = $request->filled('kota')
+            ? $request->string('kota')->toString()
+            : null;
 
-        // Sort by proximity (Haversine) if lat/lng/radius_km provided
-        if ($request->filled('lat') && $request->filled('lng')) {
-            $lat = (float) $request->lat;
-            $lng = (float) $request->lng;
-            $radius = (float) ($request->radius_km ?? 999999);
-
-            $faskes = $faskes->filter(function ($f) use ($lat, $lng, $radius) {
-                if (! $f->latitude || ! $f->longitude) {
-                    return false;
-                }
-                $dist = $this->haversine($lat, $lng, $f->latitude, $f->longitude);
-                $f->jarak_km = $dist;
-                return $dist <= $radius;
-            })->sortBy('jarak_km')->values();
+        if ($kota === null && $request->filled('lat') && $request->filled('lng')) {
+            $kota = $this->wilayahLokasi->deteksiKota(
+                (float) $request->lat,
+                (float) $request->lng,
+            );
         }
+
+        if ($kota !== null) {
+            $query->whereHas('wilayah', fn ($q) => $q->where('kota', $kota));
+        }
+
+        $faskes = $query->orderBy('nama')->get();
 
         return $this->success(
-            FaskesResource::collection($faskes),
-            'Data faskes berhasil diambil.'
+            FaskesRingkasResource::collection($faskes),
+            $kota
+                ? "Fasilitas kesehatan di {$kota} berhasil diambil."
+                : 'Data fasilitas kesehatan berhasil diambil.',
         );
     }
 
@@ -61,18 +73,5 @@ class FaskesController extends Controller
             new FaskesResource($faskes),
             'Detail faskes berhasil diambil.'
         );
-    }
-
-    /**
-     * Haversine formula — returns distance in km
-     */
-    private function haversine(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $R = 6371; // Earth radius in km
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        $a = sin($dLat / 2) ** 2 +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
-        return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }

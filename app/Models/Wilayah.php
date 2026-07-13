@@ -11,7 +11,18 @@ protected $fillable = [
         'nama',
         'kecamatan',
         'kota',
+        'provinsi',
+        'latitude',
+        'longitude',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
 
     public function laporan()
     {
@@ -26,5 +37,23 @@ protected $fillable = [
     public function zonaRawan()
     {
         return $this->hasMany(ZonaRawanBencana::class);
+    }
+
+    public function getLabelLengkapAttribute(): string
+    {
+        return "{$this->nama} — {$this->kota}, {$this->provinsi}";
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function provinsiList(): array
+    {
+        return static::query()
+            ->whereNotNull('provinsi')
+            ->distinct()
+            ->orderBy('provinsi')
+            ->pluck('provinsi', 'provinsi')
+            ->all();
     }
 }

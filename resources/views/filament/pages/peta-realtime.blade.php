@@ -1,5 +1,5 @@
 <div
-    x-data="petaRealtimeMap(@js($mapData), @js($radiusFilter))"
+    x-data="petaRealtimeMap(@js($mapData), @js($radiusFilter), @js($mapCenter))"
     x-init="init()"
     wire:ignore.self
     class="space-y-3"
@@ -659,7 +659,7 @@
     @endonce
 
     <script>
-        function petaRealtimeMap(initialData, initialRadius) {
+        function petaRealtimeMap(initialData, initialRadius, initialCenter) {
             return {
                 map: null,
                 layerGroups: {},
@@ -667,6 +667,7 @@
                 radiusCircle: null,
                 mapData: initialData,
                 radiusFilter: initialRadius,
+                mapCenter: initialCenter ?? { lat: -2.548926, lng: 118.014863, zoom: 5 },
                 lastUpdated: '',
                 hasInitialFit: false,
                 lastDataHash: '',
@@ -782,7 +783,8 @@
                 },
 
                 bootMap() {
-                    this.map = L.map(this.$refs.mapEl).setView([-3.6954, 128.1814], 12);
+                    const c = this.mapCenter ?? { lat: -2.548926, lng: 118.014863, zoom: 5 };
+                    this.map = L.map(this.$refs.mapEl).setView([c.lat, c.lng], c.zoom ?? 5);
 
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,

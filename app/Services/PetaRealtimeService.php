@@ -16,6 +16,7 @@ final class PetaRealtimeService
 {
     public function __construct(
         private readonly HaversineService $haversine,
+        private readonly WilayahLokasiService $wilayahLokasi,
     ) {}
 
     /**
@@ -60,13 +61,11 @@ final class PetaRealtimeService
     private function getLaporan(PetaRealtimeFilterDTO $filter): Collection
     {
         $query = LaporanBencana::query()
-            ->with(['wilayah:id,nama', 'relawanDitugaskan.relawan.pengguna:id,name'])
+            ->with(['wilayah:id,nama,kota,provinsi', 'relawanDitugaskan.relawan.pengguna:id,name'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        if ($filter->wilayahId !== null) {
-            $query->where('wilayah_id', $filter->wilayahId);
-        }
+        $this->applyWilayahQuery($query, $filter, 'wilayah');
 
         if ($filter->jenisKejadian !== null) {
             $query->where('jenis_kejadian', $filter->jenisKejadian);
@@ -97,6 +96,8 @@ final class PetaRealtimeService
             'status' => $item->status,
             'status_penanganan' => $item->status_penanganan ?? 'belum_ditangani',
             'wilayah' => $item->wilayah?->nama,
+            'kota' => $item->wilayah?->kota,
+            'provinsi' => $item->wilayah?->provinsi,
             'relawan' => $item->relawanDitugaskan?->relawan?->pengguna?->name,
             'tanggal' => $item->tanggal_kejadian?->format('d M Y H:i'),
             'jarak_km' => isset($item->jarak_km) ? (float) $item->jarak_km : null,
@@ -114,11 +115,20 @@ final class PetaRealtimeService
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->where('lokasi_updated_at', '>=', now()->subMinutes($filter->relawanStaleMinutes))
-            ->get();
+            ->get()
+            ->filter(fn (AkunRelawan $akun) => $this->matchesWilayahKoordinat(
+                $filter,
+                (float) $akun->latitude,
+                (float) $akun->longitude,
+            ));
 
-        return $this->applyRadiusFilter($items, $filter, function (AkunRelawan $akun): array {
+        return $this->applyRadiusFilter($items, $filter, function (AkunRelawan $akun) use ($filter): array {
             $nama = $akun->relawan?->pengguna?->name ?? 'Relawan';
             $organisasi = $akun->relawan?->organisasi;
+            $wilayah = $this->wilayahLokasi->cariWilayahTerdekat(
+                (float) $akun->latitude,
+                (float) $akun->longitude,
+            );
 
             return [
                 'id' => $akun->id,
@@ -133,6 +143,8 @@ final class PetaRealtimeService
                 'organisasi' => $organisasi,
                 'email' => $akun->email,
                 'telepon' => $akun->relawan?->pengguna?->phone,
+                'kota' => $wilayah?->kota,
+                'provinsi' => $wilayah?->provinsi,
             ];
         });
     }
@@ -143,13 +155,11 @@ final class PetaRealtimeService
     private function getFaskes(PetaRealtimeFilterDTO $filter): Collection
     {
         $query = Faskes::query()
-            ->with('wilayah:id,nama')
+            ->with('wilayah:id,nama,kota,provinsi')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        if ($filter->wilayahId !== null) {
-            $query->where('wilayah_id', $filter->wilayahId);
-        }
+        $this->applyWilayahQuery($query, $filter);
 
         $items = $query->get();
 
@@ -170,6 +180,8 @@ final class PetaRealtimeService
             },
             'alamat' => $item->alamat,
             'wilayah' => $item->wilayah?->nama,
+            'kota' => $item->wilayah?->kota,
+            'provinsi' => $item->wilayah?->provinsi,
             'telepon' => $item->nomor_telepon,
             'jam_operasional' => $item->jam_operasional,
         ]);
@@ -181,12 +193,21 @@ final class PetaRealtimeService
     private function getEvakuasi(PetaRealtimeFilterDTO $filter): Collection
     {
         $query = TitikEvakuasi::query()
-            ->with('zona.wilayah:id,nama')
+            ->with('zona.wilayah:id,nama,kota,provinsi')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
         if ($filter->wilayahId !== null) {
             $query->whereHas('zona', fn ($q) => $q->where('wilayah_id', $filter->wilayahId));
+        } elseif ($filter->kota !== null || $filter->provinsi !== null) {
+            $query->whereHas('zona.wilayah', function ($q) use ($filter): void {
+                if ($filter->provinsi !== null) {
+                    $q->where('provinsi', $filter->provinsi);
+                }
+                if ($filter->kota !== null) {
+                    $q->where('kota', $filter->kota);
+                }
+            });
         }
 
         $items = $query->get();
@@ -201,6 +222,8 @@ final class PetaRealtimeService
             'subtitle' => $item->zona?->nama_zona,
             'kapasitas' => $item->kapasitas,
             'wilayah' => $item->zona?->wilayah?->nama,
+            'kota' => $item->zona?->wilayah?->kota,
+            'provinsi' => $item->zona?->wilayah?->provinsi,
         ]);
     }
 
@@ -213,19 +236,87 @@ final class PetaRealtimeService
             ->where('status', 'aktif')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->get();
+            ->get()
+            ->filter(fn (PetugasEmergency $item) => $this->matchesWilayahKoordinat(
+                $filter,
+                (float) $item->latitude,
+                (float) $item->longitude,
+            ));
 
-        return $this->applyRadiusFilter($items, $filter, fn (PetugasEmergency $item): array => [
-            'id' => $item->id,
-            'type' => 'petugas',
-            'latitude' => (float) $item->latitude,
-            'longitude' => (float) $item->longitude,
-            'label' => $item->nama,
-            'title' => $item->nama,
-            'subtitle' => $item->kategori,
-            'telepon' => $item->nomor_telepon,
-            'alamat' => $item->alamat,
-        ]);
+        return $this->applyRadiusFilter($items, $filter, function (PetugasEmergency $item): array {
+            $wilayah = $this->wilayahLokasi->cariWilayahTerdekat(
+                (float) $item->latitude,
+                (float) $item->longitude,
+            );
+
+            return [
+                'id' => $item->id,
+                'type' => 'petugas',
+                'latitude' => (float) $item->latitude,
+                'longitude' => (float) $item->longitude,
+                'label' => $item->nama,
+                'title' => $item->nama,
+                'subtitle' => $item->kategori,
+                'telepon' => $item->nomor_telepon,
+                'alamat' => $item->alamat,
+                'kota' => $wilayah?->kota,
+                'provinsi' => $wilayah?->provinsi,
+            ];
+        });
+    }
+
+    private function applyWilayahQuery($query, PetaRealtimeFilterDTO $filter, ?string $relation = null): void
+    {
+        if ($filter->wilayahId !== null) {
+            if ($relation === 'wilayah') {
+                $query->where('wilayah_id', $filter->wilayahId);
+            } elseif ($relation !== null) {
+                $query->whereHas($relation, fn ($q) => $q->where('id', $filter->wilayahId));
+            } else {
+                $query->where('wilayah_id', $filter->wilayahId);
+            }
+
+            return;
+        }
+
+        $target = $relation ?? 'wilayah';
+
+        if ($filter->provinsi !== null) {
+            $query->whereHas($target, fn ($q) => $q->where('provinsi', $filter->provinsi));
+        }
+
+        if ($filter->kota !== null) {
+            $query->whereHas($target, fn ($q) => $q->where('kota', $filter->kota));
+        }
+    }
+
+    private function matchesWilayahKoordinat(PetaRealtimeFilterDTO $filter, float $lat, float $lng): bool
+    {
+        if ($filter->wilayahId !== null) {
+            $wilayah = $this->wilayahLokasi->cariWilayahTerdekat($lat, $lng);
+
+            return $wilayah?->id === $filter->wilayahId;
+        }
+
+        if ($filter->provinsi === null && $filter->kota === null) {
+            return true;
+        }
+
+        $wilayah = $this->wilayahLokasi->cariWilayahTerdekat($lat, $lng);
+
+        if ($wilayah === null) {
+            return false;
+        }
+
+        if ($filter->provinsi !== null && $wilayah->provinsi !== $filter->provinsi) {
+            return false;
+        }
+
+        if ($filter->kota !== null && $wilayah->kota !== $filter->kota) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

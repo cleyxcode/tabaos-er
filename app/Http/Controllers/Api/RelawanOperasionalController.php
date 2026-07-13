@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\AkunRelawan;
 use App\Models\LaporanBencana;
 use App\Models\RelawanNotifikasi;
 use App\Services\HaversineService;
 use App\Services\RelawanKedatanganService;
+use App\Services\RelawanPenugasanService;
 use App\Traits\FormatsLaporanRingkas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +19,7 @@ class RelawanOperasionalController extends Controller
     public function __construct(
         protected HaversineService $haversine,
         protected RelawanKedatanganService $kedatangan,
+        protected RelawanPenugasanService $penugasan,
     ) {}
 
     // PUT /relawan/lokasi
@@ -62,26 +63,16 @@ class RelawanOperasionalController extends Controller
         ]);
     }
 
-    // GET /relawan/laporan-terdekat
+    // GET /relawan/laporan-terdekat — hanya laporan yang ditugaskan ke relawan ini
     public function laporanTerdekat(Request $request): JsonResponse
     {
-        $request->validate([
-            'lat'    => 'required|numeric',
-            'lng'    => 'required|numeric',
-            'radius' => 'nullable|numeric|min:1|max:100',
-        ]);
+        $akun = $request->user('akun_relawan');
 
-        $lat    = (float) $request->lat;
-        $lng    = (float) $request->lng;
-        $radius = (float) ($request->radius ?? 10);
-
-        $query = LaporanBencana::query()
+        $laporan = LaporanBencana::query()
+            ->where('akun_relawan_ditugaskan', $akun->id)
             ->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani'])
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude');
-
-        $laporan = $this->haversine->scopeQuery($query, $lat, $lng, $radius)
             ->with('relawanDitugaskan.relawan.pengguna')
+            ->latest()
             ->paginate(10);
 
         $laporan->getCollection()->transform(fn (LaporanBencana $item) => $this->formatLaporanRingkas($item));
@@ -100,39 +91,20 @@ class RelawanOperasionalController extends Controller
     // GET /relawan/laporan/{id}
     public function detailLaporan(Request $request, int $id): JsonResponse
     {
+        $akun = $request->user('akun_relawan');
         $laporan = LaporanBencana::with(['pengguna', 'wilayah', 'relawanDitugaskan.relawan.pengguna'])
             ->findOrFail($id);
 
-        // Relawan aktif dalam radius 20 km dari laporan
-        $relawanTerdekat = [];
-        if ($laporan->latitude && $laporan->longitude) {
-            $relawanTerdekat = AkunRelawan::where('status', 'aktif')
-                ->whereNotNull('latitude')
-                ->whereNotNull('longitude')
-                ->where('lokasi_updated_at', '>=', now()->subMinutes(30))
-                ->get()
-                ->map(function (AkunRelawan $akun) use ($laporan) {
-                    $jarak = $this->haversine->hitungJarak(
-                        (float) $laporan->latitude, (float) $laporan->longitude,
-                        (float) $akun->latitude,   (float) $akun->longitude,
-                    );
-                    return [
-                        'id'        => $akun->id,
-                        'nama'      => $akun->relawan?->pengguna?->name,
-                        'latitude'  => $akun->latitude,
-                        'longitude' => $akun->longitude,
-                        'jarak_km'  => $jarak,
-                    ];
-                })
-                ->filter(fn ($r) => $r['jarak_km'] <= 20)
-                ->sortBy('jarak_km')
-                ->values();
+        if (! $this->penugasan->relawanBerhakAksesLaporan($akun, $laporan)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Laporan ini tidak ditugaskan kepada Anda.',
+            ], 403);
         }
 
         return response()->json([
-            'success'          => true,
-            'laporan'          => $this->formatLaporanRingkas($laporan),
-            'relawan_terdekat' => $relawanTerdekat,
+            'success' => true,
+            'laporan' => $this->formatLaporanRingkas($laporan),
         ]);
     }
 
@@ -190,53 +162,23 @@ class RelawanOperasionalController extends Controller
         ]);
     }
 
-    // GET /relawan/peta
+    // GET /relawan/peta — hanya laporan yang ditugaskan ke relawan ini
     public function dataPeta(Request $request): JsonResponse
     {
-        $request->validate([
-            'lat'    => 'required|numeric',
-            'lng'    => 'required|numeric',
-            'radius' => 'nullable|numeric|min:1|max:100',
-        ]);
+        $akun = $request->user('akun_relawan');
 
-        $lat    = (float) $request->lat;
-        $lng    = (float) $request->lng;
-        $radius = (float) ($request->radius ?? 20);
-
-        $laporanQuery = LaporanBencana::query()
+        $laporan = LaporanBencana::query()
+            ->where('akun_relawan_ditugaskan', $akun->id)
             ->where('status', '!=', 'selesai')
             ->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani'])
             ->whereNotNull('latitude')
-            ->whereNotNull('longitude');
-
-        $laporan = $this->haversine->scopeQuery($laporanQuery, $lat, $lng, $radius)
-            ->get(['id', 'latitude', 'longitude', 'jenis_kejadian', 'status_penanganan']);
-
-        $relawanAktif = AkunRelawan::where('status', 'aktif')
-            ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->where('lokasi_updated_at', '>=', now()->subMinutes(30))
-            ->with('relawan.pengguna')
-            ->get()
-            ->filter(function (AkunRelawan $akun) use ($lat, $lng, $radius) {
-                $jarak = $this->haversine->hitungJarak(
-                    $lat, $lng, (float) $akun->latitude, (float) $akun->longitude,
-                );
-                return $jarak <= $radius;
-            })
-            ->map(fn (AkunRelawan $akun) => [
-                'id'               => $akun->id,
-                'nama'             => $akun->relawan?->pengguna?->name,
-                'latitude'         => $akun->latitude,
-                'longitude'        => $akun->longitude,
-                'lokasi_updated_at' => $akun->lokasi_updated_at,
-            ])
-            ->values();
+            ->get(['id', 'latitude', 'longitude', 'jenis_kejadian', 'status_penanganan']);
 
         return response()->json([
             'success'       => true,
             'laporan'       => $laporan,
-            'relawan_aktif' => $relawanAktif,
+            'relawan_aktif' => [],
         ]);
     }
 

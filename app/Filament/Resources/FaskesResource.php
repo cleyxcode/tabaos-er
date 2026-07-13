@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FaskesResource\Pages;
 use App\Filament\Resources\FaskesResource\RelationManagers\AkunFaskesRelationManager;
 use App\Filament\Resources\FaskesResource\RelationManagers\AmbulansRelationManager;
+use App\Filament\Support\WilayahAdminSupport;
 use App\Models\Faskes;
 use Dotswan\MapPicker\Fields\Map;
 use Filament\Forms;
@@ -40,7 +41,7 @@ class FaskesResource extends Resource
                 ->required(),
             Forms\Components\Select::make('wilayah_id')
                 ->label('Wilayah')
-                ->relationship('wilayah', 'nama')
+                ->options(fn (): array => WilayahAdminSupport::wilayahOptions())
                 ->searchable()
                 ->preload()
                 ->nullable(),
@@ -66,7 +67,10 @@ class FaskesResource extends Resource
             Map::make('location')
                 ->label('Lokasi (Peta)')
                 ->columnSpanFull()
-                ->defaultLocation(latitude: -3.6954, longitude: 128.1814)
+                ->defaultLocation(
+                    latitude: WilayahAdminSupport::PUSAT_INDONESIA_LAT,
+                    longitude: WilayahAdminSupport::PUSAT_INDONESIA_LNG,
+                )
                 ->draggable()
                 ->clickable(true)
                 ->zoom(13)
@@ -114,6 +118,12 @@ class FaskesResource extends Resource
                         'apotek' => 'Apotek',
                         default => $state,
                     }),
+                Tables\Columns\TextColumn::make('wilayah.provinsi')
+                    ->label('Provinsi')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('wilayah.kota')
+                    ->label('Kota')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('wilayah.nama')
                     ->label('Wilayah')
                     ->sortable(),

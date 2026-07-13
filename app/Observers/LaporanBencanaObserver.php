@@ -11,6 +11,6 @@ class LaporanBencanaObserver
 
     public function created(LaporanBencana $laporan): void
     {
-        $this->notifikasi->kirimKeRelawanTerdekat($laporan, radiusKm: 10);
+        $this->notifikasi->kirimKeRelawanTerdekat($laporan);
     }
 }
