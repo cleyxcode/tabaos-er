@@ -31,8 +31,8 @@ final class PenangananDaruratStats extends BaseWidget
         $stats = $service->penangananDarurat();
 
         return [
-            Stat::make('Butuh Verifikasi', $stats['pending'])
-                ->description("{$stats['hari_ini']} laporan masuk hari ini")
+            Stat::make('Pending (lama)', $stats['pending'])
+                ->description("{$stats['hari_ini']} laporan masuk hari ini · laporan baru auto-verifikasi")
                 ->descriptionIcon('heroicon-m-clock', IconPosition::Before)
                 ->icon('heroicon-o-exclamation-triangle')
                 ->color('danger')

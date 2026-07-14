@@ -50,9 +50,10 @@ class LaporanBencanaController extends Controller
     {
         $data = $request->safe()->except('foto');
 
-        // Otomatis set pengguna_id dan status
+        // Otomatis set pengguna_id dan langsung diverifikasi (tanpa tunggu ACC admin)
         $data['pengguna_id'] = auth('pengguna')->id();
-        $data['status']      = 'pending';
+        $data['status'] = 'diverifikasi';
+        $data['verified_at'] = now();
 
         // Simpan laporan dulu tanpa foto
         $laporan = LaporanBencana::create($data);

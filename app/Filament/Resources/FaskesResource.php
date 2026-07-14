@@ -40,10 +40,11 @@ class FaskesResource extends Resource
                 ->required(),
             Forms\Components\Select::make('wilayah_id')
                 ->label('Wilayah')
+                ->helperText('Wajib diisi agar faskes muncul di filter daerah masyarakat (pulau/kota terdekat). Pilih wilayah yang sesuai lokasi faskes — mis. faskes di Ambon jangan dihubungkan ke Banda.')
                 ->options(fn (): array => WilayahAdminSupport::wilayahOptions())
                 ->searchable()
                 ->preload()
-                ->nullable(),
+                ->required(),
             Forms\Components\Select::make('admin_id')
                 ->label('Admin Faskes')
                 ->relationship('admin', 'name')
@@ -65,6 +66,7 @@ class FaskesResource extends Resource
                 ->nullable(),
             Map::make('location')
                 ->label('Lokasi (Peta)')
+                ->helperText('Titik ini dipakai di peta aplikasi masyarakat dan tombol Buka Google Maps. Pastikan pin akurat.')
                 ->columnSpanFull()
                 ->defaultLocation(
                     latitude: WilayahAdminSupport::PUSAT_INDONESIA_LAT,

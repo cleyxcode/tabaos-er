@@ -7,6 +7,7 @@ use App\Http\Resources\Api\FaskesRingkasResource;
 use App\Http\Resources\Api\FaskesResource;
 use App\Models\Faskes;
 use App\Services\HaversineService;
+use App\Services\WilayahLokasiService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -19,13 +20,16 @@ class FaskesController extends Controller
 
     private const DEFAULT_RADIUS_KM = 75.0;
 
-    public function __construct(protected HaversineService $haversine) {}
+    public function __construct(
+        protected HaversineService $haversine,
+        protected WilayahLokasiService $wilayahLokasi,
+    ) {}
 
     /**
      * GET /api/v1/faskes
      *
-     * - lat+lng (lokasi saya) → faskes dalam radius, lintas kota/provinsi, urut jarak
-     * - pulau/kota/provinsi → filter wilayah
+     * - lat+lng (lokasi saya) → faskes di pulau/kota daerah user saja, urut jarak terdekat
+     * - pulau/kota/provinsi → filter wilayah (+ jarak jika ada koordinat)
      * - semua=1 / tanpa filter → semua faskes
      */
     public function index(Request $request): JsonResponse
@@ -53,6 +57,25 @@ class FaskesController extends Controller
         $hasCoords = $request->filled('lat') && $request->filled('lng');
         $nearbyMode = ! $semua && ! $hasWilayahFilter && $hasCoords;
 
+        $detectedPulau = null;
+        $detectedKota = null;
+
+        // Mode lokasi saya: hanya faskes di daerah (pulau) yang sama, bukan kota/pulau lain.
+        if ($nearbyMode) {
+            $lat = (float) $request->lat;
+            $lng = (float) $request->lng;
+            $detectedPulau = $this->wilayahLokasi->deteksiPulau($lat, $lng);
+            $detectedKota = $this->wilayahLokasi->deteksiKota($lat, $lng);
+
+            if ($detectedPulau !== null) {
+                $pulau = $detectedPulau;
+            } elseif ($detectedKota !== null) {
+                $kota = $detectedKota;
+            }
+
+            $hasWilayahFilter = $pulau !== null || $kota !== null;
+        }
+
         $query = Faskes::query()->with('wilayah');
 
         if ($request->filled('search')) {
@@ -77,19 +100,31 @@ class FaskesController extends Controller
         $lat = $hasCoords ? (float) $request->lat : null;
         $lng = $hasCoords ? (float) $request->lng : null;
         $radiusKm = (float) ($request->input('radius_km') ?? self::DEFAULT_RADIUS_KM);
+        $hasCustomRadius = $request->filled('radius_km');
 
         if ($lat !== null && $lng !== null) {
             $faskes = $this->attachJarak($faskes, $lat, $lng);
 
             if ($nearbyMode) {
-                $faskes = $faskes
-                    ->filter(fn (Faskes $item): bool => (float) $item->jarak_km <= $radiusKm)
-                    ->sortBy('jarak_km')
-                    ->values();
+                // Radius hanya dikenakan jika client mengirim radius_km (opsi tambahan).
+                // Default: semua faskes di pulau/kota yang sama, diurut jarak terdekat.
+                if ($hasCustomRadius) {
+                    $faskes = $faskes->filter(
+                        fn (Faskes $item): bool => (float) $item->jarak_km <= $radiusKm
+                    );
+                }
+
+                $faskes = $faskes->sortBy('jarak_km')->values();
+
+                $scopeLabel = $detectedPulau
+                    ?? $detectedKota
+                    ?? $pulau
+                    ?? $kota
+                    ?? 'daerah Anda';
 
                 return $this->success(
                     FaskesRingkasResource::collection($faskes),
-                    "Fasilitas kesehatan dalam radius {$radiusKm} km berhasil diambil.",
+                    "Fasilitas kesehatan terdekat di {$scopeLabel} berhasil diambil.",
                 );
             }
 

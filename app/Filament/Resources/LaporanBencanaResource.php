@@ -207,7 +207,8 @@ class LaporanBencanaResource extends Resource
                         ])->columns(2),
                 ]),
 
-            \Filament\Schemas\Components\Section::make('Status Verifikasi')
+            \Filament\Schemas\Components\Section::make('Status Penanganan')
+                ->description('Laporan dari aplikasi masyarakat otomatis diverifikasi saat dibuat. Status di bawah bisa diubah untuk alur penanganan.')
                 ->icon('heroicon-o-check-badge')
                 ->schema([
                     Forms\Components\Select::make('status')
@@ -218,7 +219,7 @@ class LaporanBencanaResource extends Resource
                             'ditangani' => 'Ditangani',
                             'selesai' => 'Selesai',
                         ])
-                        ->default('pending')
+                        ->default('diverifikasi')
                         ->required(),
                     Forms\Components\Select::make('verified_by')
                         ->label('Diverifikasi Oleh')
@@ -325,6 +326,7 @@ class LaporanBencanaResource extends Resource
             ])
             ->actions([
                 LaporanLokasiTable::lihatLokasiAction(),
+                // Aksi cadangan untuk data lama berstatus pending (laporan baru sudah auto-verifikasi)
                 \Filament\Actions\Action::make('verifikasi')
                     ->label('Verifikasi')
                     ->icon('heroicon-o-check-circle')

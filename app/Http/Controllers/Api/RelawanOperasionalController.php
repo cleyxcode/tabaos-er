@@ -88,6 +88,64 @@ class RelawanOperasionalController extends Controller
         ]);
     }
 
+    /**
+     * GET /relawan/laporan-riwayat
+     *
+     * Riwayat semua laporan yang pernah ditugaskan ke relawan ini.
+     * Query: status=belum_selesai|selesai|semua (default: semua)
+     */
+    public function laporanRiwayat(Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'nullable|string|in:belum_selesai,selesai,semua',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $akun = $request->user('akun_relawan');
+        $filter = $request->string('status')->toString();
+        if ($filter === '') {
+            $filter = 'semua';
+        }
+
+        $query = LaporanBencana::query()
+            ->where('akun_relawan_ditugaskan', $akun->id)
+            ->with('relawanDitugaskan.relawan.pengguna');
+
+        match ($filter) {
+            'belum_selesai' => $query->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani']),
+            'selesai' => $query->where('status_penanganan', 'selesai_ditangani'),
+            default => null,
+        };
+
+        $laporan = $query->latest()->paginate(15);
+
+        $laporan->getCollection()->transform(
+            fn (LaporanBencana $item) => $this->formatLaporanRingkas($item)
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Riwayat laporan berhasil diambil.',
+            'data' => $laporan->items(),
+            'meta' => [
+                'current_page' => $laporan->currentPage(),
+                'last_page' => $laporan->lastPage(),
+                'total' => $laporan->total(),
+                'filter' => $filter,
+            ],
+            'ringkasan' => [
+                'belum_selesai' => LaporanBencana::query()
+                    ->where('akun_relawan_ditugaskan', $akun->id)
+                    ->whereIn('status_penanganan', ['belum_ditangani', 'sedang_ditangani'])
+                    ->count(),
+                'selesai' => LaporanBencana::query()
+                    ->where('akun_relawan_ditugaskan', $akun->id)
+                    ->where('status_penanganan', 'selesai_ditangani')
+                    ->count(),
+            ],
+        ]);
+    }
+
     // GET /relawan/laporan/{id}
     public function detailLaporan(Request $request, int $id): JsonResponse
     {

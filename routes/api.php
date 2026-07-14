@@ -36,6 +36,7 @@ Route::prefix('v1/relawan')
         Route::put('lokasi',               [RelawanOperasionalController::class, 'updateLokasi']);
         Route::post('fcm-token',           [RelawanOperasionalController::class, 'updateFcmToken']);
         Route::get('laporan-terdekat',     [RelawanOperasionalController::class, 'laporanTerdekat']);
+        Route::get('laporan-riwayat',      [RelawanOperasionalController::class, 'laporanRiwayat']);
         Route::get('laporan/{id}',         [RelawanOperasionalController::class, 'detailLaporan'])->whereNumber('id');
         Route::post('laporan/{id}/claim',  [RelawanOperasionalController::class, 'claimLaporan'])->whereNumber('id');
         Route::put('laporan/{id}/selesai', [RelawanOperasionalController::class, 'selesaikanLaporan'])->whereNumber('id');

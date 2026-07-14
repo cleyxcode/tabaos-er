@@ -13,7 +13,7 @@ final class FaskesKotaApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testLokasiSayaMenampilkanFaskesSekitarLintasKota(): void
+    public function testLokasiSayaHanyaMenampilkanFaskesDiPulauYangSama(): void
     {
         $ambon = Wilayah::create([
             'nama' => 'Kota Ambon',
@@ -25,7 +25,7 @@ final class FaskesKotaApiTest extends TestCase
             'longitude' => 128.1814,
         ]);
 
-        // Wilayah berbeda (kota/provinsi lain) tapi koordinat dekat Ambon
+        // Wilayah berbeda kota tapi pulau yang sama
         $dekat = Wilayah::create([
             'nama' => 'Desa Dekat',
             'kecamatan' => 'Laha',
@@ -73,7 +73,7 @@ final class FaskesKotaApiTest extends TestCase
             'longitude' => 129.9070,
         ]);
 
-        // GPS di Ambon — radius default 75km harus mencakup Ambon + Laha, bukan Banda (~180km)
+        // GPS di Ambon — hanya faskes Pulau Ambon, bukan Banda; urut jarak terdekat
         $response = $this->getJson('/api/v1/faskes?lat=-3.6960&lng=128.1805');
 
         $response->assertOk()
@@ -85,7 +85,58 @@ final class FaskesKotaApiTest extends TestCase
         $this->assertContains('Puskesmas Laha', $names);
         $this->assertNotContains('Puskesmas Banda Neira', $names);
         $this->assertNotNull($response->json('data.0.jarak_km'));
+        $this->assertNotNull($response->json('data.0.location.lat'));
+        $this->assertNotNull($response->json('data.0.location.lng'));
         $this->assertTrue($response->json('data.0.jarak_km') <= $response->json('data.1.jarak_km'));
+        $this->assertStringContainsString('Pulau Ambon', $response->json('message'));
+    }
+
+    public function testLokasiSayaDiBandaTidakMenampilkanFaskesAmbon(): void
+    {
+        $ambon = Wilayah::create([
+            'nama' => 'Kota Ambon',
+            'kecamatan' => 'Sirimau',
+            'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
+            'provinsi' => 'Maluku',
+            'latitude' => -3.6954,
+            'longitude' => 128.1814,
+        ]);
+
+        $banda = Wilayah::create([
+            'nama' => 'Banda Neira',
+            'kecamatan' => 'Banda',
+            'kota' => 'Banda',
+            'pulau' => 'Kepulauan Banda',
+            'provinsi' => 'Maluku',
+            'latitude' => -4.5267,
+            'longitude' => 129.9044,
+        ]);
+
+        Faskes::create([
+            'wilayah_id' => $ambon->id,
+            'nama' => 'RSUD Ambon',
+            'tipe' => 'rumah_sakit',
+            'alamat' => 'Jl. Ambon',
+            'latitude' => -3.6900,
+            'longitude' => 128.1850,
+        ]);
+
+        Faskes::create([
+            'wilayah_id' => $banda->id,
+            'nama' => 'Puskesmas Banda Neira',
+            'tipe' => 'puskesmas',
+            'alamat' => 'Banda Neira',
+            'latitude' => -4.5290,
+            'longitude' => 129.9070,
+        ]);
+
+        $response = $this->getJson('/api/v1/faskes?lat=-4.5267&lng=129.9044');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.nama', 'Puskesmas Banda Neira');
+        $this->assertStringContainsString('Kepulauan Banda', $response->json('message'));
     }
 
     public function testFilterEksplisitPerPulauMasihBerfungsi(): void
