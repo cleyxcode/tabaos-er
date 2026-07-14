@@ -7,11 +7,14 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\LaporanBencanaResource;
 use App\Services\DashboardStatistikService;
 use Filament\Support\Enums\IconPosition;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class KorbanJiwaStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 4;
 
     protected ?string $heading = 'Dampak Korban Jiwa';
@@ -24,7 +27,7 @@ final class KorbanJiwaStats extends BaseWidget
 
     protected function getStats(): array
     {
-        $stats = app(DashboardStatistikService::class)->korbanJiwa();
+        $stats = DashboardStatistikService::forFilters($this->pageFilters)->korbanJiwa();
 
         return [
             Stat::make('Total Korban', number_format($stats['total_korban']))

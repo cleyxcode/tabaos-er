@@ -6,9 +6,12 @@ namespace App\Filament\Widgets;
 
 use App\Services\DashboardStatistikService;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 final class LaporanTrendChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 5;
 
     protected ?string $heading = 'Tren Laporan Masuk';
@@ -38,7 +41,7 @@ final class LaporanTrendChart extends ChartWidget
     protected function getData(): array
     {
         $days = (int) ($this->filter ?? 30);
-        $trend = app(DashboardStatistikService::class)->trendLaporan($days);
+        $trend = DashboardStatistikService::forFilters($this->pageFilters)->trendLaporan($days);
 
         return [
             'datasets' => [

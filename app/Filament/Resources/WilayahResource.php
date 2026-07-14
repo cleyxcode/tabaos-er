@@ -32,6 +32,11 @@ class WilayahResource extends Resource
                 ->required()
                 ->maxLength(100)
                 ->placeholder('Contoh: Maluku, Jawa Timur'),
+            Forms\Components\TextInput::make('pulau')
+                ->label('Pulau')
+                ->required()
+                ->maxLength(100)
+                ->placeholder('Contoh: Pulau Ambon, Kepulauan Banda'),
             Forms\Components\TextInput::make('kota')
                 ->label('Kota/Kabupaten')
                 ->required()
@@ -87,6 +92,10 @@ class WilayahResource extends Resource
                     ->label('Provinsi')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('pulau')
+                    ->label('Pulau')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('kota')
                     ->label('Kota/Kabupaten')
                     ->searchable()
@@ -116,6 +125,9 @@ class WilayahResource extends Resource
                 Tables\Filters\SelectFilter::make('provinsi')
                     ->label('Provinsi')
                     ->options(fn (): array => WilayahAdminSupport::provinsiOptions()),
+                Tables\Filters\SelectFilter::make('pulau')
+                    ->label('Pulau')
+                    ->options(fn (): array => WilayahAdminSupport::pulauOptions()),
                 Tables\Filters\SelectFilter::make('kota')
                     ->label('Kota/Kabupaten')
                     ->options(fn (): array => WilayahAdminSupport::kotaOptions()),
@@ -148,6 +160,6 @@ class WilayahResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['nama', 'kecamatan', 'kota', 'provinsi'];
+        return ['nama', 'kecamatan', 'kota', 'pulau', 'provinsi'];
     }
 }

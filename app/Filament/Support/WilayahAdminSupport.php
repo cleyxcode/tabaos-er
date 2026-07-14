@@ -35,10 +35,26 @@ final class WilayahAdminSupport
     /**
      * @return array<string, string>
      */
-    public static function kotaOptions(?string $provinsi = null): array
+    public static function pulauOptions(?string $provinsi = null): array
     {
         return Wilayah::query()
             ->when($provinsi, fn (Builder $q) => $q->where('provinsi', $provinsi))
+            ->whereNotNull('pulau')
+            ->where('pulau', '!=', '')
+            ->distinct()
+            ->orderBy('pulau')
+            ->pluck('pulau', 'pulau')
+            ->all();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function kotaOptions(?string $provinsi = null, ?string $pulau = null): array
+    {
+        return Wilayah::query()
+            ->when($provinsi, fn (Builder $q) => $q->where('provinsi', $provinsi))
+            ->when($pulau, fn (Builder $q) => $q->where('pulau', $pulau))
             ->whereNotNull('kota')
             ->where('kota', '!=', '')
             ->distinct()
@@ -50,12 +66,17 @@ final class WilayahAdminSupport
     /**
      * @return array<int, string>
      */
-    public static function wilayahOptions(?string $provinsi = null, ?string $kota = null): array
-    {
+    public static function wilayahOptions(
+        ?string $provinsi = null,
+        ?string $pulau = null,
+        ?string $kota = null,
+    ): array {
         return Wilayah::query()
             ->when($provinsi, fn (Builder $q) => $q->where('provinsi', $provinsi))
+            ->when($pulau, fn (Builder $q) => $q->where('pulau', $pulau))
             ->when($kota, fn (Builder $q) => $q->where('kota', $kota))
             ->orderBy('provinsi')
+            ->orderBy('pulau')
             ->orderBy('kota')
             ->orderBy('nama')
             ->get()
@@ -66,8 +87,12 @@ final class WilayahAdminSupport
     /**
      * @return array{lat: float, lng: float, zoom: int}
      */
-    public static function petaCenter(?int $wilayahId = null, ?string $provinsi = null, ?string $kota = null): array
-    {
+    public static function petaCenter(
+        ?int $wilayahId = null,
+        ?string $provinsi = null,
+        ?string $kota = null,
+        ?string $pulau = null,
+    ): array {
         $query = Wilayah::query()
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
@@ -76,6 +101,8 @@ final class WilayahAdminSupport
             $query->where('id', $wilayahId);
         } elseif ($kota !== null) {
             $query->where('kota', $kota);
+        } elseif ($pulau !== null) {
+            $query->where('pulau', $pulau);
         } elseif ($provinsi !== null) {
             $query->where('provinsi', $provinsi);
         }
@@ -96,6 +123,7 @@ final class WilayahAdminSupport
             'zoom' => match (true) {
                 $wilayahId !== null => 12,
                 $kota !== null => 10,
+                $pulau !== null => 9,
                 $provinsi !== null => 7,
                 default => 6,
             },
@@ -129,6 +157,18 @@ final class WilayahAdminSupport
                     }
 
                     return $query->whereHas($wilayahRelation, fn (Builder $q) => $q->where('provinsi', $value));
+                }),
+
+            Tables\Filters\SelectFilter::make('pulau')
+                ->label('Pulau')
+                ->options(fn (): array => self::pulauOptions())
+                ->query(function (Builder $query, array $data) use ($wilayahRelation): Builder {
+                    $value = $data['value'] ?? null;
+                    if (blank($value)) {
+                        return $query;
+                    }
+
+                    return $query->whereHas($wilayahRelation, fn (Builder $q) => $q->where('pulau', $value));
                 }),
 
             Tables\Filters\SelectFilter::make('kota')

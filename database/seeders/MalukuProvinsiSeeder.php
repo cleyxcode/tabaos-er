@@ -58,16 +58,16 @@ class MalukuProvinsiSeeder extends Seeder
     private function seedWilayahKota(): void
     {
         $kota = [
-            ['nama' => 'Kota Ambon', 'kecamatan' => 'Sirimau', 'kota' => 'Kota Ambon', 'lat' => -3.6954, 'lng' => 128.1814],
-            ['nama' => 'Namlea', 'kecamatan' => 'Namlea', 'kota' => 'Buru', 'lat' => -3.2683, 'lng' => 126.7667],
-            ['nama' => 'Namrole', 'kecamatan' => 'Namrole', 'kota' => 'Buru Selatan', 'lat' => -3.8550, 'lng' => 126.7167],
-            ['nama' => 'Tual', 'kecamatan' => 'Tual Kota', 'kota' => 'Tual', 'lat' => -5.6417, 'lng' => 132.7472],
-            ['nama' => 'Dobo', 'kecamatan' => 'Dobo', 'kota' => 'Dobo', 'lat' => -5.9833, 'lng' => 134.1333],
-            ['nama' => 'Elat', 'kecamatan' => 'Elat', 'kota' => 'Kei Besar', 'lat' => -5.7167, 'lng' => 132.6833],
-            ['nama' => 'Banda Neira', 'kecamatan' => 'Banda', 'kota' => 'Banda', 'lat' => -4.5267, 'lng' => 129.9044],
-            ['nama' => 'Masohi', 'kecamatan' => 'Masohi', 'kota' => 'Seram', 'lat' => -3.3000, 'lng' => 129.3667],
-            ['nama' => 'Piru', 'kecamatan' => 'Piru', 'kota' => 'Seram Barat', 'lat' => -3.2000, 'lng' => 128.0833],
-            ['nama' => 'Saumlaki', 'kecamatan' => 'Saumlaki', 'kota' => 'Tanimbar', 'lat' => -7.9833, 'lng' => 131.3000],
+            ['nama' => 'Kota Ambon', 'kecamatan' => 'Sirimau', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon', 'lat' => -3.6954, 'lng' => 128.1814],
+            ['nama' => 'Namlea', 'kecamatan' => 'Namlea', 'kota' => 'Buru', 'pulau' => 'Pulau Buru', 'lat' => -3.2683, 'lng' => 126.7667],
+            ['nama' => 'Namrole', 'kecamatan' => 'Namrole', 'kota' => 'Buru Selatan', 'pulau' => 'Pulau Buru', 'lat' => -3.8550, 'lng' => 126.7167],
+            ['nama' => 'Tual', 'kecamatan' => 'Tual Kota', 'kota' => 'Tual', 'pulau' => 'Kepulauan Kei', 'lat' => -5.6417, 'lng' => 132.7472],
+            ['nama' => 'Dobo', 'kecamatan' => 'Dobo', 'kota' => 'Dobo', 'pulau' => 'Kepulauan Aru', 'lat' => -5.9833, 'lng' => 134.1333],
+            ['nama' => 'Elat', 'kecamatan' => 'Elat', 'kota' => 'Kei Besar', 'pulau' => 'Kepulauan Kei', 'lat' => -5.7167, 'lng' => 132.6833],
+            ['nama' => 'Banda Neira', 'kecamatan' => 'Banda', 'kota' => 'Banda', 'pulau' => 'Kepulauan Banda', 'lat' => -4.5267, 'lng' => 129.9044],
+            ['nama' => 'Masohi', 'kecamatan' => 'Masohi', 'kota' => 'Seram', 'pulau' => 'Pulau Seram', 'lat' => -3.3000, 'lng' => 129.3667],
+            ['nama' => 'Piru', 'kecamatan' => 'Piru', 'kota' => 'Seram Barat', 'pulau' => 'Pulau Seram', 'lat' => -3.2000, 'lng' => 128.0833],
+            ['nama' => 'Saumlaki', 'kecamatan' => 'Saumlaki', 'kota' => 'Tanimbar', 'pulau' => 'Kepulauan Tanimbar', 'lat' => -7.9833, 'lng' => 131.3000],
         ];
 
         foreach ($kota as $item) {
@@ -75,6 +75,7 @@ class MalukuProvinsiSeeder extends Seeder
                 ['nama' => $item['nama'], 'kecamatan' => $item['kecamatan']],
                 [
                     'kota' => $item['kota'],
+                    'pulau' => $item['pulau'],
                     'provinsi' => self::PROVINSI,
                     'latitude' => $item['lat'],
                     'longitude' => $item['lng'],

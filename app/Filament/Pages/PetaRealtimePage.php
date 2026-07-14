@@ -35,6 +35,8 @@ final class PetaRealtimePage extends Page
 
     public ?string $provinsi = null;
 
+    public ?string $pulau = null;
+
     public ?string $kota = null;
 
     public ?int $wilayahId = null;
@@ -68,13 +70,25 @@ final class PetaRealtimePage extends Page
     {
         return $schema->components([
             Section::make('Filter Wilayah')
-                ->description('Saring data per provinsi, kota, atau wilayah tertentu. Mendukung multi-provinsi.')
+                ->description('Saring data per provinsi, pulau, kota, atau wilayah tertentu. Mendukung multi-provinsi.')
                 ->icon('heroicon-o-globe-asia-australia')
                 ->schema([
                     Forms\Components\Select::make('provinsi')
                         ->label('Provinsi')
                         ->placeholder('Semua provinsi')
                         ->options(fn (): array => WilayahAdminSupport::provinsiOptions())
+                        ->searchable()
+                        ->live()
+                        ->afterStateUpdated(function (): void {
+                            $this->pulau = null;
+                            $this->kota = null;
+                            $this->wilayahId = null;
+                        }),
+
+                    Forms\Components\Select::make('pulau')
+                        ->label('Pulau')
+                        ->placeholder('Semua pulau')
+                        ->options(fn (Get $get): array => WilayahAdminSupport::pulauOptions($get('provinsi')))
                         ->searchable()
                         ->live()
                         ->afterStateUpdated(function (): void {
@@ -85,7 +99,10 @@ final class PetaRealtimePage extends Page
                     Forms\Components\Select::make('kota')
                         ->label('Kota/Kabupaten')
                         ->placeholder('Semua kota')
-                        ->options(fn (Get $get): array => WilayahAdminSupport::kotaOptions($get('provinsi')))
+                        ->options(fn (Get $get): array => WilayahAdminSupport::kotaOptions(
+                            $get('provinsi'),
+                            $get('pulau'),
+                        ))
                         ->searchable()
                         ->live()
                         ->afterStateUpdated(fn () => $this->wilayahId = null),
@@ -95,12 +112,13 @@ final class PetaRealtimePage extends Page
                         ->placeholder('Semua wilayah')
                         ->options(fn (Get $get): array => WilayahAdminSupport::wilayahOptions(
                             $get('provinsi'),
+                            $get('pulau'),
                             $get('kota'),
                         ))
                         ->searchable()
                         ->live(),
                 ])
-                ->columns(['default' => 1, 'md' => 3]),
+                ->columns(['default' => 1, 'md' => 2, 'xl' => 4]),
 
             Section::make('Filter Data')
                 ->description('Saring laporan dan titik yang ditampilkan di peta. Data diperbarui otomatis setiap 5 detik.')
@@ -255,6 +273,7 @@ final class PetaRealtimePage extends Page
     {
         $this->reset([
             'provinsi',
+            'pulau',
             'kota',
             'wilayahId',
             'jenisKejadian',
@@ -275,7 +294,7 @@ final class PetaRealtimePage extends Page
 
     public function setPusatDariFilterWilayah(): void
     {
-        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota, $this->pulau);
         $this->setPusatDariPeta($center['lat'], $center['lng']);
     }
 
@@ -301,8 +320,16 @@ final class PetaRealtimePage extends Page
             return $wilayah?->label_lengkap ?? 'Wilayah terpilih';
         }
 
+        if ($this->kota !== null && $this->pulau !== null) {
+            return "{$this->kota}, {$this->pulau}";
+        }
+
         if ($this->kota !== null && $this->provinsi !== null) {
             return "{$this->kota}, {$this->provinsi}";
+        }
+
+        if ($this->pulau !== null) {
+            return "Pulau {$this->pulau}";
         }
 
         if ($this->provinsi !== null) {
@@ -333,7 +360,7 @@ final class PetaRealtimePage extends Page
             ];
         }
 
-        return WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        return WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota, $this->pulau);
     }
 
     /**
@@ -345,7 +372,7 @@ final class PetaRealtimePage extends Page
             return ['lat' => null, 'lng' => null, 'km' => null];
         }
 
-        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota, $this->pulau);
         $lat = $this->centerLat ?? (string) $center['lat'];
         $lng = $this->centerLng ?? (string) $center['lng'];
 
@@ -359,7 +386,7 @@ final class PetaRealtimePage extends Page
     private function buildFilter(): PetaRealtimeFilterDTO
     {
         $radiusKm = filled($this->jarakArea) ? (float) $this->jarakArea : null;
-        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota);
+        $center = WilayahAdminSupport::petaCenter($this->wilayahId, $this->provinsi, $this->kota, $this->pulau);
         $centerLat = filled($this->jarakArea)
             ? (float) ($this->centerLat ?? $center['lat'])
             : null;
@@ -370,6 +397,7 @@ final class PetaRealtimePage extends Page
         return PetaRealtimeFilterDTO::fromArray([
             'wilayahId' => $this->wilayahId,
             'provinsi' => $this->provinsi,
+            'pulau' => $this->pulau,
             'kota' => $this->kota,
             'jenisKejadian' => $this->jenisKejadian,
             'statusLaporan' => $this->statusLaporan,

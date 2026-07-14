@@ -5,8 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PedomanBhdResource\Pages;
 use App\Models\PedomanBhd;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
@@ -14,39 +15,80 @@ use Illuminate\Support\Facades\Auth;
 class PedomanBhdResource extends Resource
 {
     protected static ?string $model = PedomanBhd::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-book-open';
+
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-academic-cap';
+
     protected static string | \UnitEnum | null $navigationGroup = 'Konten';
-    protected static ?string $navigationLabel = 'Pedoman BHD';
+
+    protected static ?string $navigationLabel = 'Edukasi';
+
     protected static ?int $navigationSort = 40;
-    protected static ?string $modelLabel = 'Pedoman BHD';
-    protected static ?string $pluralModelLabel = 'Pedoman BHD';
+
+    protected static ?string $modelLabel = 'Edukasi';
+
+    protected static ?string $pluralModelLabel = 'Edukasi';
+
+    protected static ?string $slug = 'edukasi';
 
     public static function form(Schema $form): Schema
     {
         return $form->schema([
             Forms\Components\TextInput::make('judul')
-                ->label('Judul Pedoman')
+                ->label('Judul')
                 ->required()
-                ->maxLength(255),
+                ->maxLength(255)
+                ->columnSpanFull(),
             Forms\Components\Select::make('tipe_file')
-                ->label('Tipe File')
+                ->label('Tipe Materi')
                 ->options([
                     'pdf' => 'PDF',
                     'video' => 'Video',
-                    'gambar' => 'Gambar',
-                    'dokumen' => 'Dokumen',
+                    'gambar' => 'Foto / Gambar',
+                    'dokumen' => 'Dokumen Lain',
                 ])
-                ->required(),
+                ->required()
+                ->live()
+                ->helperText('Bisa dipilih manual atau otomatis dari ekstensi file yang diunggah.'),
             Forms\Components\Textarea::make('deskripsi')
                 ->label('Deskripsi')
                 ->required()
                 ->rows(3)
                 ->columnSpanFull(),
             Forms\Components\FileUpload::make('file_path')
-                ->label('File')
+                ->label('File Materi')
                 ->disk('public')
-                ->directory('pedoman-bhd')
+                ->directory('edukasi')
                 ->required()
+                ->downloadable()
+                ->openable()
+                ->maxSize(102400)
+                ->acceptedFileTypes([
+                    'application/pdf',
+                    'video/mp4',
+                    'video/webm',
+                    'video/quicktime',
+                    'image/jpeg',
+                    'image/png',
+                    'image/webp',
+                    'image/gif',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ])
+                ->helperText('Unggah foto, PDF, atau video (maks. 100 MB). PDF & video bisa dilihat langsung di aplikasi.')
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if (! is_string($state) || $state === '') {
+                        return;
+                    }
+
+                    $ext = strtolower(pathinfo($state, PATHINFO_EXTENSION));
+                    $tipe = match ($ext) {
+                        'pdf' => 'pdf',
+                        'mp4', 'webm', 'mov', 'mkv' => 'video',
+                        'jpg', 'jpeg', 'png', 'webp', 'gif' => 'gambar',
+                        default => 'dokumen',
+                    };
+                    $set('tipe_file', $tipe);
+                })
                 ->columnSpanFull(),
             Forms\Components\Hidden::make('uploaded_by')
                 ->default(fn () => Auth::id()),
@@ -69,7 +111,13 @@ class PedomanBhdResource extends Resource
                         'success' => 'gambar',
                         'warning' => 'dokumen',
                     ])
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'gambar' => 'Foto',
+                        'pdf' => 'PDF',
+                        'video' => 'Video',
+                        'dokumen' => 'Dokumen',
+                        default => ucfirst($state),
+                    }),
                 Tables\Columns\TextColumn::make('pengunggah.name')
                     ->label('Diunggah Oleh')
                     ->default('-'),
@@ -80,12 +128,12 @@ class PedomanBhdResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('tipe_file')
-                    ->label('Tipe File')
+                    ->label('Tipe Materi')
                     ->options([
                         'pdf' => 'PDF',
                         'video' => 'Video',
-                        'gambar' => 'Gambar',
-                        'dokumen' => 'Dokumen',
+                        'gambar' => 'Foto / Gambar',
+                        'dokumen' => 'Dokumen Lain',
                     ]),
             ])
             ->actions([

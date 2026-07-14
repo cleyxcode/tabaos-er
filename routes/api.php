@@ -77,11 +77,14 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     // Publik — tanpa login
     Route::get('petugas-emergency', [PetugasEmergencyController::class, 'index']);
     Route::get('wilayah/lokasi', [WilayahController::class, 'deteksiLokasi']);
+    Route::get('wilayah/opsi', [WilayahController::class, 'opsiFilter']);
     Route::get('faskes', [FaskesController::class, 'index']);
     Route::get('faskes/{faskes}', [FaskesController::class, 'show'])->whereNumber('faskes');
     Route::get('ambulans', [AmbulansController::class, 'index']);
-    Route::get('pedoman-bhd', [PedomanBhdController::class, 'index']);
-    Route::get('pedoman-bhd/{pedomanBhd}', [PedomanBhdController::class, 'show']);
+    Route::get('edukasi', [PedomanBhdController::class, 'index']);
+    Route::get('edukasi/{pedomanBhd}', [PedomanBhdController::class, 'show'])->whereNumber('pedomanBhd');
+    Route::get('pedoman-bhd', [PedomanBhdController::class, 'index']); // alias kompatibel
+    Route::get('pedoman-bhd/{pedomanBhd}', [PedomanBhdController::class, 'show'])->whereNumber('pedomanBhd');
     Route::get('zona-rawan', [ZonaRawanBencanaController::class, 'index']);
     Route::get('zona-rawan/{zonaRawanBencana}', [ZonaRawanBencanaController::class, 'show']);
     Route::get('titik-evakuasi', [TitikEvakuasiController::class, 'index']);

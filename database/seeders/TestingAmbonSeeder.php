@@ -38,7 +38,11 @@ class TestingAmbonSeeder extends Seeder
     {
         $wilayah = Wilayah::firstOrCreate(
             ['nama' => 'Sirimau', 'kecamatan' => 'Sirimau'],
-            ['kota' => 'Kota Ambon']
+            [
+                'kota' => 'Kota Ambon',
+                'pulau' => 'Pulau Ambon',
+                'provinsi' => 'Maluku',
+            ]
         );
 
         // ── 1. Akun Masyarakat (pelapor) ────────────────────────────────────

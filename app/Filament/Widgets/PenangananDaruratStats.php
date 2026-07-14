@@ -7,11 +7,14 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\LaporanBencanaResource;
 use App\Services\DashboardStatistikService;
 use Filament\Support\Enums\IconPosition;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class PenangananDaruratStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
 
     protected ?string $heading = 'Penanganan Darurat';
@@ -24,8 +27,8 @@ final class PenangananDaruratStats extends BaseWidget
 
     protected function getStats(): array
     {
-        $stats = app(DashboardStatistikService::class)->penangananDarurat();
-        $service = app(DashboardStatistikService::class);
+        $service = DashboardStatistikService::forFilters($this->pageFilters);
+        $stats = $service->penangananDarurat();
 
         return [
             Stat::make('Butuh Verifikasi', $stats['pending'])

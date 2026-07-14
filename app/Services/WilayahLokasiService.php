@@ -36,6 +36,11 @@ class WilayahLokasiService
         return $this->cariWilayahTerdekat($lat, $lng)?->kota;
     }
 
+    public function deteksiPulau(float $lat, float $lng): ?string
+    {
+        return $this->cariWilayahTerdekat($lat, $lng)?->pulau;
+    }
+
     public function deteksiProvinsi(float $lat, float $lng): ?string
     {
         return $this->cariWilayahTerdekat($lat, $lng)?->provinsi;

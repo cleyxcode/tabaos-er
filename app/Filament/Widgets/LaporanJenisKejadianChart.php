@@ -6,9 +6,12 @@ namespace App\Filament\Widgets;
 
 use App\Services\DashboardStatistikService;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 final class LaporanJenisKejadianChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 6;
 
     protected ?string $heading = 'Jenis Kejadian';
@@ -21,7 +24,7 @@ final class LaporanJenisKejadianChart extends ChartWidget
 
     protected function getData(): array
     {
-        $chart = app(DashboardStatistikService::class)->laporanPerJenisKejadian();
+        $chart = DashboardStatistikService::forFilters($this->pageFilters)->laporanPerJenisKejadian();
 
         $colors = [
             '#ef4444',

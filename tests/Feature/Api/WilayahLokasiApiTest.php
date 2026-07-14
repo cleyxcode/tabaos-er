@@ -12,12 +12,13 @@ final class WilayahLokasiApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testDeteksiLokasiMengembalikanKotaDanProvinsi(): void
+    public function testDeteksiLokasiMengembalikanKotaPulauDanProvinsi(): void
     {
         Wilayah::create([
             'nama' => 'Kota Ambon',
             'kecamatan' => 'Sirimau',
             'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
             'provinsi' => 'Maluku',
             'latitude' => -3.6954,
             'longitude' => 128.1814,
@@ -28,7 +29,39 @@ final class WilayahLokasiApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.kota', 'Kota Ambon')
+            ->assertJsonPath('data.pulau', 'Pulau Ambon')
             ->assertJsonPath('data.provinsi', 'Maluku')
-            ->assertJsonPath('data.label', 'Kota Ambon, Maluku');
+            ->assertJsonPath('data.label', 'Pulau Ambon, Maluku');
+    }
+
+    public function testOpsiFilterMengembalikanDaftarWilayah(): void
+    {
+        Wilayah::create([
+            'nama' => 'Kota Ambon',
+            'kecamatan' => 'Sirimau',
+            'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
+            'provinsi' => 'Maluku',
+            'latitude' => -3.6954,
+            'longitude' => 128.1814,
+        ]);
+
+        Wilayah::create([
+            'nama' => 'Banda Neira',
+            'kecamatan' => 'Banda',
+            'kota' => 'Banda',
+            'pulau' => 'Kepulauan Banda',
+            'provinsi' => 'Maluku',
+            'latitude' => -4.5267,
+            'longitude' => 129.9044,
+        ]);
+
+        $response = $this->getJson('/api/v1/wilayah/opsi');
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment(['Maluku'])
+            ->assertJsonPath('data.pulau.0', 'Kepulauan Banda')
+            ->assertJsonPath('data.pulau.1', 'Pulau Ambon');
     }
 }

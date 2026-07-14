@@ -6,9 +6,12 @@ namespace App\Filament\Widgets;
 
 use App\Services\DashboardStatistikService;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 final class LaporanPenangananChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 7;
 
     protected ?string $heading = 'Status Penanganan';
@@ -21,7 +24,7 @@ final class LaporanPenangananChart extends ChartWidget
 
     protected function getData(): array
     {
-        $chart = app(DashboardStatistikService::class)->laporanPerPenanganan();
+        $chart = DashboardStatistikService::forFilters($this->pageFilters)->laporanPerPenanganan();
 
         return [
             'datasets' => [

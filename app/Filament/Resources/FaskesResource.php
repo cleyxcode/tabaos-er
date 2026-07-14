@@ -120,6 +120,9 @@ class FaskesResource extends Resource
                 Tables\Columns\TextColumn::make('wilayah.provinsi')
                     ->label('Provinsi')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('wilayah.pulau')
+                    ->label('Pulau')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('wilayah.kota')
                     ->label('Kota')
                     ->sortable(),
@@ -140,6 +143,7 @@ class FaskesResource extends Resource
                         'puskesmas' => 'Puskesmas',
                         'apotek' => 'Apotek',
                     ]),
+                ...WilayahAdminSupport::tableFilters(),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),

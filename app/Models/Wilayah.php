@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Wilayah extends Model
 {
     protected $table = 'wilayah';
-protected $fillable = [
+
+    protected $fillable = [
         'nama',
         'kecamatan',
         'kota',
+        'pulau',
         'provinsi',
         'latitude',
         'longitude',
@@ -41,7 +43,14 @@ protected $fillable = [
 
     public function getLabelLengkapAttribute(): string
     {
-        return "{$this->nama} — {$this->kota}, {$this->provinsi}";
+        $parts = array_filter([
+            $this->nama,
+            $this->pulau,
+            $this->kota,
+            $this->provinsi,
+        ]);
+
+        return implode(' — ', $parts);
     }
 
     /**
@@ -51,9 +60,25 @@ protected $fillable = [
     {
         return static::query()
             ->whereNotNull('provinsi')
+            ->where('provinsi', '!=', '')
             ->distinct()
             ->orderBy('provinsi')
             ->pluck('provinsi', 'provinsi')
+            ->all();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function pulauList(?string $provinsi = null): array
+    {
+        return static::query()
+            ->when($provinsi, fn ($q) => $q->where('provinsi', $provinsi))
+            ->whereNotNull('pulau')
+            ->where('pulau', '!=', '')
+            ->distinct()
+            ->orderBy('pulau')
+            ->pluck('pulau', 'pulau')
             ->all();
     }
 }

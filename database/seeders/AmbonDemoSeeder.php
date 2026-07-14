@@ -94,7 +94,7 @@ class AmbonDemoSeeder extends Seeder
                 ['Titik Evakuasi', 5],
                 ['Ambulans', count($this->ambulans)],
                 ['Penugasan', 5],
-                ['Pedoman BHD', 5],
+                ['Pedoman BHD / Edukasi', 5],
                 ['Notifikasi Relawan', 6],
                 ['Notifikasi Admin (broadcast)', 5],
             ],
@@ -106,17 +106,21 @@ class AmbonDemoSeeder extends Seeder
     private function seedWilayah(): void
     {
         $data = [
-            ['nama' => 'Sirimau', 'kecamatan' => 'Sirimau', 'kota' => 'Kota Ambon'],
-            ['nama' => 'Nusaniwe', 'kecamatan' => 'Nusaniwe', 'kota' => 'Kota Ambon'],
-            ['nama' => 'Teluk Ambon', 'kecamatan' => 'Teluk Ambon', 'kota' => 'Kota Ambon'],
-            ['nama' => 'Baguala', 'kecamatan' => 'Baguala', 'kota' => 'Kota Ambon'],
-            ['nama' => 'Leitimur Selatan', 'kecamatan' => 'Leitimur Selatan', 'kota' => 'Kota Ambon'],
+            ['nama' => 'Sirimau', 'kecamatan' => 'Sirimau', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon'],
+            ['nama' => 'Nusaniwe', 'kecamatan' => 'Nusaniwe', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon'],
+            ['nama' => 'Teluk Ambon', 'kecamatan' => 'Teluk Ambon', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon'],
+            ['nama' => 'Baguala', 'kecamatan' => 'Baguala', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon'],
+            ['nama' => 'Leitimur Selatan', 'kecamatan' => 'Leitimur Selatan', 'kota' => 'Kota Ambon', 'pulau' => 'Pulau Ambon'],
         ];
 
         foreach ($data as $item) {
             $this->wilayah[] = Wilayah::firstOrCreate(
                 ['nama' => $item['nama'], 'kecamatan' => $item['kecamatan']],
-                ['kota' => $item['kota']],
+                [
+                    'kota' => $item['kota'],
+                    'pulau' => $item['pulau'],
+                    'provinsi' => 'Maluku',
+                ],
             );
         }
     }
@@ -476,8 +480,8 @@ class AmbonDemoSeeder extends Seeder
                 ['judul' => $item['judul']],
                 [
                     'tipe_file' => $item['tipe'],
-                    'deskripsi' => 'Materi pedoman bencana demo untuk wilayah Kota Ambon dan Maluku.',
-                    'file_path' => 'https://example.com/pedoman-ambon-' . ($index + 1) . '.' . ($item['tipe'] === 'video' ? 'mp4' : 'pdf'),
+                    'deskripsi' => 'Materi edukasi bencana demo untuk wilayah Kota Ambon dan Maluku.',
+                    'file_path' => 'https://example.com/edukasi-ambon-' . ($index + 1) . '.' . ($item['tipe'] === 'video' ? 'mp4' : 'pdf'),
                     'uploaded_by' => $this->admin?->id,
                     'created_at' => now(),
                     'updated_at' => now(),

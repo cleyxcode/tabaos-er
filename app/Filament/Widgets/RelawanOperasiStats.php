@@ -9,11 +9,14 @@ use App\Filament\Resources\AkunRelawanResource;
 use App\Filament\Resources\RelawanResource;
 use App\Services\DashboardStatistikService;
 use Filament\Support\Enums\IconPosition;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class RelawanOperasiStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 2;
 
     protected ?string $heading = 'Relawan & Operasi Lapangan';
@@ -26,8 +29,8 @@ final class RelawanOperasiStats extends BaseWidget
 
     protected function getStats(): array
     {
-        $stats = app(DashboardStatistikService::class)->relawanOperasi();
-        $service = app(DashboardStatistikService::class);
+        $service = DashboardStatistikService::forFilters($this->pageFilters);
+        $stats = $service->relawanOperasi();
 
         return [
             Stat::make('Relawan Disetujui', $stats['disetujui'])

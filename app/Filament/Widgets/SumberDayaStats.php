@@ -11,11 +11,14 @@ use App\Filament\Resources\PetugasEmergencyResource;
 use App\Filament\Resources\ZonaRawanBencanaResource;
 use App\Services\DashboardStatistikService;
 use Filament\Support\Enums\IconPosition;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class SumberDayaStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 3;
 
     protected ?string $heading = 'Sumber Daya & Infrastruktur';
@@ -28,7 +31,7 @@ final class SumberDayaStats extends BaseWidget
 
     protected function getStats(): array
     {
-        $stats = app(DashboardStatistikService::class)->sumberDaya();
+        $stats = DashboardStatistikService::forFilters($this->pageFilters)->sumberDaya();
 
         return [
             Stat::make('Faskes Terdaftar', $stats['faskes'])

@@ -104,6 +104,60 @@ final class DashboardStatistikServiceTest extends TestCase
         $this->assertCount(7, $trend['data']);
     }
 
+    public function testPenangananDaruratBisaDifilterPerPulau(): void
+    {
+        $ambon = Wilayah::create([
+            'nama' => 'Sirimau',
+            'kecamatan' => 'Sirimau',
+            'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
+            'provinsi' => 'Maluku',
+        ]);
+
+        $banda = Wilayah::create([
+            'nama' => 'Banda Neira',
+            'kecamatan' => 'Banda',
+            'kota' => 'Banda',
+            'pulau' => 'Kepulauan Banda',
+            'provinsi' => 'Maluku',
+        ]);
+
+        LaporanBencana::create([
+            'wilayah_id' => $ambon->id,
+            'nama_pelapor' => 'A',
+            'nomor_kontak' => '08111111111',
+            'jenis_kejadian' => 'Banjir',
+            'latitude' => -3.69,
+            'longitude' => 128.18,
+            'tanggal_kejadian' => now(),
+            'deskripsi' => 'Test Ambon',
+            'status' => 'pending',
+            'status_penanganan' => 'belum_ditangani',
+        ]);
+
+        LaporanBencana::create([
+            'wilayah_id' => $banda->id,
+            'nama_pelapor' => 'B',
+            'nomor_kontak' => '08222222222',
+            'jenis_kejadian' => 'Gempa Bumi',
+            'latitude' => -4.52,
+            'longitude' => 129.90,
+            'tanggal_kejadian' => now(),
+            'deskripsi' => 'Test Banda',
+            'status' => 'pending',
+            'status_penanganan' => 'belum_ditangani',
+        ]);
+
+        $statsSemua = DashboardStatistikService::forFilters(null)->penangananDarurat();
+        $this->assertSame(2, $statsSemua['total']);
+
+        $statsAmbon = DashboardStatistikService::forFilters(['pulau' => 'Pulau Ambon'])->penangananDarurat();
+        $this->assertSame(1, $statsAmbon['total']);
+
+        $statsBanda = DashboardStatistikService::forFilters(['pulau' => 'Kepulauan Banda'])->penangananDarurat();
+        $this->assertSame(1, $statsBanda['total']);
+    }
+
     public function testRelawanOperasiMenghitungStatusRelawan(): void
     {
         $penggunaA = Pengguna::create([
