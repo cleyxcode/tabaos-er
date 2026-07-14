@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
-            MalukuProvinsiSeeder::class,
+            MalukuDataLengkapSeeder::class,
         ]);
     }
 }
