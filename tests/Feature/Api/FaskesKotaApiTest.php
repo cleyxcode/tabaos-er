@@ -169,6 +169,36 @@ final class FaskesKotaApiTest extends TestCase
             ->assertJsonCount(0, 'data');
     }
 
+    public function testFilterSemuaWilayahMenerimaQueryBooleanString(): void
+    {
+        $wilayah = Wilayah::create([
+            'nama' => 'Kota Ambon',
+            'kecamatan' => 'Sirimau',
+            'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
+            'provinsi' => 'Maluku',
+            'latitude' => -3.6954,
+            'longitude' => 128.1814,
+        ]);
+
+        Faskes::create([
+            'wilayah_id' => $wilayah->id,
+            'nama' => 'RSUD Ambon',
+            'tipe' => 'rumah_sakit',
+            'alamat' => 'Jl. Ambon',
+            'latitude' => -3.6900,
+            'longitude' => 128.1850,
+        ]);
+
+        $this->getJson('/api/v1/faskes?semua=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->getJson('/api/v1/faskes?semua=true')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
     public function testRadiusKustomBisaMemilihJangkauanLebihKecil(): void
     {
         $wilayah = Wilayah::create([

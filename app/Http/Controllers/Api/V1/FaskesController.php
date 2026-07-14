@@ -43,13 +43,13 @@ class FaskesController extends Controller
             'provinsi' => 'nullable|string|max:100',
             'wilayah_id' => 'nullable|integer|exists:wilayah,id',
             'search' => 'nullable|string|max:100',
-            'semua' => 'nullable|boolean',
+            'semua' => 'nullable|in:0,1,true,false',
         ]);
 
         $provinsi = $request->filled('provinsi') ? $request->string('provinsi')->toString() : null;
         $pulau = $request->filled('pulau') ? $request->string('pulau')->toString() : null;
         $kota = $request->filled('kota') ? $request->string('kota')->toString() : null;
-        $semua = $request->boolean('semua');
+        $semua = filter_var($request->input('semua'), FILTER_VALIDATE_BOOLEAN);
         $hasWilayahFilter = $provinsi !== null
             || $pulau !== null
             || $kota !== null
