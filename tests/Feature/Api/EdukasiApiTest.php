@@ -38,7 +38,7 @@ final class EdukasiApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonCount(2, 'data')
-            ->assertJsonPath('message', 'Data edukasi berhasil diambil.');
+            ->assertJsonPath('message', 'Data edukasi dan simulasi berhasil diambil.');
 
         $video = collect($response->json('data'))->firstWhere('tipe_file', 'video');
         $this->assertNotNull($video);
@@ -49,6 +49,60 @@ final class EdukasiApiTest extends TestCase
         $pdf = collect($response->json('data'))->firstWhere('tipe_file', 'pdf');
         $this->assertTrue($pdf['bisa_dibaca_langsung']);
         $this->assertSame('application/pdf', $pdf['mime_type']);
+    }
+
+    public function testIndexMenyertakanAplikasiSimulasiApk(): void
+    {
+        PedomanBhd::create([
+            'judul' => 'Simulasi Evakuasi Gempa',
+            'tipe_file' => 'aplikasi',
+            'deskripsi' => 'APK latihan evakuasi',
+            'file_path' => 'edukasi/simulasi-gempa.apk',
+        ]);
+
+        PedomanBhd::create([
+            'judul' => 'Poster Tsunami',
+            'tipe_file' => 'gambar',
+            'deskripsi' => 'Poster',
+            'file_path' => 'edukasi/poster.jpg',
+        ]);
+
+        $response = $this->getJson('/api/v1/edukasi');
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $apk = collect($response->json('data'))->firstWhere('tipe_file', 'aplikasi');
+        $this->assertNotNull($apk);
+        $this->assertSame('Simulasi Evakuasi Gempa', $apk['judul']);
+        $this->assertTrue($apk['bisa_diunduh']);
+        $this->assertFalse($apk['bisa_diputar']);
+        $this->assertFalse($apk['bisa_dibaca_langsung']);
+        $this->assertSame('simulasi-gempa.apk', $apk['file_name']);
+        $this->assertSame('application/vnd.android.package-archive', $apk['mime_type']);
+        $this->assertStringContainsString('storage/edukasi/simulasi-gempa.apk', $apk['file_url']);
+    }
+
+    public function testFilterTipeFileAplikasi(): void
+    {
+        PedomanBhd::create([
+            'judul' => 'PDF A',
+            'tipe_file' => 'pdf',
+            'deskripsi' => 'A',
+            'file_path' => 'edukasi/a.pdf',
+        ]);
+        PedomanBhd::create([
+            'judul' => 'APK Simulasi',
+            'tipe_file' => 'aplikasi',
+            'deskripsi' => 'Simulasi',
+            'file_path' => 'edukasi/sim.apk',
+        ]);
+
+        $this->getJson('/api/v1/edukasi?tipe_file=aplikasi')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.judul', 'APK Simulasi')
+            ->assertJsonPath('data.0.bisa_diunduh', true);
     }
 
     public function testAliasPedomanBhdMasihBerfungsi(): void
@@ -99,6 +153,23 @@ final class EdukasiApiTest extends TestCase
         $this->getJson('/api/v1/edukasi/'.$item->id)
             ->assertOk()
             ->assertJsonPath('data.judul', 'Detail Video')
-            ->assertJsonPath('data.bisa_diputar', true);
+            ->assertJsonPath('data.bisa_diputar', true)
+            ->assertJsonPath('message', 'Detail edukasi dan simulasi berhasil diambil.');
+    }
+
+    public function testShowAplikasiSimulasi(): void
+    {
+        $item = PedomanBhd::create([
+            'judul' => 'Simulasi Tsunami',
+            'tipe_file' => 'aplikasi',
+            'deskripsi' => 'APK simulasi',
+            'file_path' => 'edukasi/tsunami.apk',
+        ]);
+
+        $this->getJson('/api/v1/edukasi/'.$item->id)
+            ->assertOk()
+            ->assertJsonPath('data.tipe_file', 'aplikasi')
+            ->assertJsonPath('data.bisa_diunduh', true)
+            ->assertJsonPath('data.file_name', 'tsunami.apk');
     }
 }

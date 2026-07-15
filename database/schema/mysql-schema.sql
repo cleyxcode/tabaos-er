@@ -252,7 +252,7 @@ DROP TABLE IF EXISTS `pedoman_bhd`;
 CREATE TABLE `pedoman_bhd` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `judul` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `tipe_file` enum('pdf','video','gambar','dokumen') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tipe_file` enum('pdf','video','gambar','dokumen','aplikasi') COLLATE utf8mb4_unicode_ci NOT NULL,
   `deskripsi` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `uploaded_by` bigint unsigned DEFAULT NULL,

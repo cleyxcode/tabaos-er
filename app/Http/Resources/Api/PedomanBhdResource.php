@@ -12,6 +12,7 @@ class PedomanBhdResource extends JsonResource
     public function toArray(Request $request): array
     {
         $fileUrl = $this->resolveFileUrl($this->file_path);
+        $isAplikasi = $this->tipe_file === 'aplikasi';
 
         return [
             'id' => $this->id,
@@ -23,6 +24,7 @@ class PedomanBhdResource extends JsonResource
             'mime_type' => $this->guessMimeType($fileUrl),
             'bisa_diputar' => $this->tipe_file === 'video',
             'bisa_dibaca_langsung' => in_array($this->tipe_file, ['pdf', 'gambar'], true),
+            'bisa_diunduh' => $isAplikasi || $this->tipe_file === 'dokumen',
             'created_at' => $this->created_at?->toISOString(),
         ];
     }
@@ -57,10 +59,12 @@ class PedomanBhdResource extends JsonResource
             'png' => 'image/png',
             'webp' => 'image/webp',
             'gif' => 'image/gif',
+            'apk' => 'application/vnd.android.package-archive',
             default => match ($this->tipe_file) {
                 'pdf' => 'application/pdf',
                 'video' => 'video/mp4',
                 'gambar' => 'image/jpeg',
+                'aplikasi' => 'application/vnd.android.package-archive',
                 default => 'application/octet-stream',
             },
         };

@@ -41,7 +41,7 @@ final class AdminPanelAccessTest extends TestCase
             'petugas emergency' => ['/admin/petugas-emergencies'],
             'warga mobile app' => ['/admin/penggunas'],
             'pedoman bhd' => ['/admin/edukasi'],
-            'edukasi' => ['/admin/edukasi'],
+            'edukasi dan simulasi' => ['/admin/edukasi'],
             'notifikasi admin' => ['/admin/notifikasi-admins'],
             'kelola admin' => ['/admin/users'],
         ];

@@ -6,6 +6,7 @@ use App\Filament\Resources\PedomanBhdResource\Pages;
 use App\Models\PedomanBhd;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -20,13 +21,13 @@ class PedomanBhdResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Konten';
 
-    protected static ?string $navigationLabel = 'Edukasi';
+    protected static ?string $navigationLabel = 'Edukasi dan Simulasi';
 
     protected static ?int $navigationSort = 40;
 
-    protected static ?string $modelLabel = 'Edukasi';
+    protected static ?string $modelLabel = 'Edukasi dan Simulasi';
 
-    protected static ?string $pluralModelLabel = 'Edukasi';
+    protected static ?string $pluralModelLabel = 'Edukasi dan Simulasi';
 
     protected static ?string $slug = 'edukasi';
 
@@ -45,23 +46,26 @@ class PedomanBhdResource extends Resource
                     'video' => 'Video',
                     'gambar' => 'Foto / Gambar',
                     'dokumen' => 'Dokumen Lain',
+                    'aplikasi' => 'Aplikasi Simulasi (APK)',
                 ])
                 ->required()
                 ->live()
-                ->helperText('Bisa dipilih manual atau otomatis dari ekstensi file yang diunggah.'),
+                ->helperText('Bisa dipilih manual atau otomatis dari ekstensi file yang diunggah. Pilih Aplikasi Simulasi untuk file APK.'),
             Forms\Components\Textarea::make('deskripsi')
                 ->label('Deskripsi')
                 ->required()
                 ->rows(3)
                 ->columnSpanFull(),
             Forms\Components\FileUpload::make('file_path')
-                ->label('File Materi')
+                ->label(fn (Get $get): string => $get('tipe_file') === 'aplikasi'
+                    ? 'File Aplikasi Simulasi (APK)'
+                    : 'File Materi')
                 ->disk('public')
                 ->directory('edukasi')
                 ->required()
                 ->downloadable()
                 ->openable()
-                ->maxSize(102400)
+                ->maxSize(204800)
                 ->acceptedFileTypes([
                     'application/pdf',
                     'video/mp4',
@@ -73,8 +77,10 @@ class PedomanBhdResource extends Resource
                     'image/gif',
                     'application/msword',
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.android.package-archive',
+                    'application/octet-stream',
                 ])
-                ->helperText('Unggah foto, PDF, atau video (maks. 100 MB). PDF & video bisa dilihat langsung di aplikasi.')
+                ->helperText('Unggah foto, PDF, video, atau APK aplikasi simulasi (maks. 200 MB). APK bisa diunduh di aplikasi mobile.')
                 ->afterStateUpdated(function ($state, Set $set): void {
                     if (! is_string($state) || $state === '') {
                         return;
@@ -85,6 +91,7 @@ class PedomanBhdResource extends Resource
                         'pdf' => 'pdf',
                         'mp4', 'webm', 'mov', 'mkv' => 'video',
                         'jpg', 'jpeg', 'png', 'webp', 'gif' => 'gambar',
+                        'apk' => 'aplikasi',
                         default => 'dokumen',
                     };
                     $set('tipe_file', $tipe);
@@ -110,12 +117,14 @@ class PedomanBhdResource extends Resource
                         'primary' => 'video',
                         'success' => 'gambar',
                         'warning' => 'dokumen',
+                        'info' => 'aplikasi',
                     ])
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'gambar' => 'Foto',
                         'pdf' => 'PDF',
                         'video' => 'Video',
                         'dokumen' => 'Dokumen',
+                        'aplikasi' => 'Aplikasi Simulasi',
                         default => ucfirst($state),
                     }),
                 Tables\Columns\TextColumn::make('pengunggah.name')
@@ -134,6 +143,7 @@ class PedomanBhdResource extends Resource
                         'video' => 'Video',
                         'gambar' => 'Foto / Gambar',
                         'dokumen' => 'Dokumen Lain',
+                        'aplikasi' => 'Aplikasi Simulasi (APK)',
                     ]),
             ])
             ->actions([

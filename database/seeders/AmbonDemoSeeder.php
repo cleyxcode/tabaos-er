@@ -473,15 +473,24 @@ class AmbonDemoSeeder extends Seeder
             ['judul' => 'Video Simulasi Gempa Bumi', 'tipe' => 'video'],
             ['judul' => 'Infografis Titik Kumpul Ambon', 'tipe' => 'gambar'],
             ['judul' => 'Panduan Pertolongan Pertama Darurat', 'tipe' => 'pdf'],
+            ['judul' => 'Aplikasi Simulasi Evakuasi Gempa', 'tipe' => 'aplikasi'],
         ];
 
         foreach ($data as $index => $item) {
+            $ext = match ($item['tipe']) {
+                'video' => 'mp4',
+                'aplikasi' => 'apk',
+                default => 'pdf',
+            };
+
             DB::table('pedoman_bhd')->updateOrInsert(
                 ['judul' => $item['judul']],
                 [
                     'tipe_file' => $item['tipe'],
-                    'deskripsi' => 'Materi edukasi bencana demo untuk wilayah Kota Ambon dan Maluku.',
-                    'file_path' => 'https://example.com/edukasi-ambon-' . ($index + 1) . '.' . ($item['tipe'] === 'video' ? 'mp4' : 'pdf'),
+                    'deskripsi' => $item['tipe'] === 'aplikasi'
+                        ? 'Aplikasi simulasi kebencanaan. Unduh APK lalu instal di perangkat Android.'
+                        : 'Materi edukasi bencana demo untuk wilayah Kota Ambon dan Maluku.',
+                    'file_path' => 'https://example.com/edukasi-ambon-' . ($index + 1) . '.' . $ext,
                     'uploaded_by' => $this->admin?->id,
                     'created_at' => now(),
                     'updated_at' => now(),

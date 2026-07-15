@@ -15,12 +15,12 @@ class PedomanBhdController extends Controller
 
     /**
      * GET /api/v1/edukasi (alias: /pedoman-bhd)
-     * Materi edukasi publik: foto, PDF, video, dokumen.
+     * Materi edukasi & aplikasi simulasi publik: foto, PDF, video, dokumen, APK.
      */
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'tipe_file' => 'nullable|in:pdf,video,gambar,dokumen',
+            'tipe_file' => 'nullable|in:pdf,video,gambar,dokumen,aplikasi',
         ]);
 
         $query = PedomanBhd::query();
@@ -33,7 +33,7 @@ class PedomanBhdController extends Controller
 
         return $this->success(
             PedomanBhdResource::collection($items),
-            'Data edukasi berhasil diambil.'
+            'Data edukasi dan simulasi berhasil diambil.'
         );
     }
 
@@ -41,7 +41,7 @@ class PedomanBhdController extends Controller
     {
         return $this->success(
             new PedomanBhdResource($pedomanBhd),
-            'Detail edukasi berhasil diambil.'
+            'Detail edukasi dan simulasi berhasil diambil.'
         );
     }
 }

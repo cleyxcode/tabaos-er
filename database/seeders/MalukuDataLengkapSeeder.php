@@ -187,7 +187,7 @@ class MalukuDataLengkapSeeder extends Seeder
                 ['Ambulans', count($this->ambulans)],
                 ['Petugas emergency', PetugasEmergency::count()],
                 ['Penugasan', Penugasan::count()],
-                ['Edukasi / pedoman', DB::table('pedoman_bhd')->count()],
+                ['Edukasi dan Simulasi', DB::table('pedoman_bhd')->count()],
                 ['Notifikasi relawan', RelawanNotifikasi::count()],
                 ['Notifikasi admin broadcast', NotifikasiAdmin::count()],
             ],
@@ -550,12 +550,15 @@ class MalukuDataLengkapSeeder extends Seeder
             ['judul' => 'Checklist Logistik Posko Aru', 'tipe' => 'dokumen'],
             ['judul' => 'Peta Evakuasi Banda Neira', 'tipe' => 'gambar'],
             ['judul' => 'SOP Koordinasi Relawan Tanimbar', 'tipe' => 'dokumen'],
+            ['judul' => 'Aplikasi Simulasi Evakuasi Gempa', 'tipe' => 'aplikasi'],
+            ['judul' => 'Aplikasi Simulasi Tsunami Maluku', 'tipe' => 'aplikasi'],
         ];
 
         foreach ($data as $i => $item) {
             $ext = match ($item['tipe']) {
                 'video' => 'mp4',
                 'gambar' => 'jpg',
+                'aplikasi' => 'apk',
                 default => 'pdf',
             };
 
@@ -563,7 +566,9 @@ class MalukuDataLengkapSeeder extends Seeder
                 ['judul' => $item['judul']],
                 [
                     'tipe_file' => $item['tipe'],
-                    'deskripsi' => 'Materi edukasi kebencanaan untuk masyarakat dan relawan Provinsi Maluku.',
+                    'deskripsi' => $item['tipe'] === 'aplikasi'
+                        ? 'Aplikasi simulasi kebencanaan. Unduh file APK lalu instal di perangkat Android Anda.'
+                        : 'Materi edukasi kebencanaan untuk masyarakat dan relawan Provinsi Maluku.',
                     'file_path' => 'https://example.com/edukasi-maluku-'.($i + 1).'.'.$ext,
                     'uploaded_by' => $this->admin?->id,
                     'created_at' => now(),
