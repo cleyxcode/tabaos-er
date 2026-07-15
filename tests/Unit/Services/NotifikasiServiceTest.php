@@ -33,6 +33,7 @@ final class NotifikasiServiceTest extends TestCase
             'nama' => 'Kota Ambon',
             'kecamatan' => 'Sirimau',
             'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
             'provinsi' => 'Maluku',
             'latitude' => -3.6954,
             'longitude' => 128.1814,

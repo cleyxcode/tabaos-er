@@ -75,7 +75,23 @@ class RelawanOperasionalController extends Controller
             ->latest()
             ->paginate(10);
 
-        $laporan->getCollection()->transform(fn (LaporanBencana $item) => $this->formatLaporanRingkas($item));
+        $laporan->getCollection()->transform(function (LaporanBencana $item) use ($akun) {
+            if (
+                $akun->latitude !== null
+                && $akun->longitude !== null
+                && $item->latitude !== null
+                && $item->longitude !== null
+            ) {
+                $item->jarak_km = $this->haversine->hitungJarak(
+                    (float) $akun->latitude,
+                    (float) $akun->longitude,
+                    (float) $item->latitude,
+                    (float) $item->longitude,
+                );
+            }
+
+            return $this->formatLaporanRingkas($item);
+        });
 
         return response()->json([
             'success' => true,
@@ -169,12 +185,12 @@ class RelawanOperasionalController extends Controller
     // POST /relawan/laporan/{id}/claim
     public function claimLaporan(Request $request, int $id): JsonResponse
     {
-        $laporan = LaporanBencana::findOrFail($id);
-        $akun    = $request->user('akun_relawan');
+        $laporan = LaporanBencana::with('wilayah')->findOrFail($id);
+        $akun = $request->user('akun_relawan');
 
         if (
-            $laporan->akun_relawan_ditugaskan !== null &&
-            $laporan->akun_relawan_ditugaskan !== $akun->id
+            $laporan->akun_relawan_ditugaskan !== null
+            && (int) $laporan->akun_relawan_ditugaskan !== (int) $akun->id
         ) {
             return response()->json([
                 'success' => false,
@@ -182,9 +198,20 @@ class RelawanOperasionalController extends Controller
             ], 409);
         }
 
+        // Belum ditugaskan: hanya relawan terdekat di daerah laporan yang boleh klaim.
+        if ($laporan->akun_relawan_ditugaskan === null) {
+            $terdekat = $this->penugasan->tugaskanRelawanTerdekat($laporan);
+            if ($terdekat === null || (int) $terdekat->id !== (int) $akun->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Laporan ini bukan penugasan untuk Anda (relawan terdekat di daerah tersebut).',
+                ], 403);
+            }
+        }
+
         $laporan->update([
             'akun_relawan_ditugaskan' => $akun->id,
-            'status_penanganan'       => 'sedang_ditangani',
+            'status_penanganan' => 'sedang_ditangani',
             'relawan_sampai_notified_at' => null,
         ]);
 

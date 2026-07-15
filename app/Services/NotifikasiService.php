@@ -16,8 +16,10 @@ class NotifikasiService
      * Tugaskan laporan ke satu relawan terdekat dan kirim notifikasi hanya ke relawan tersebut.
      * Dipanggil dari LaporanBencanaObserver::created().
      */
-    public function kirimKeRelawanTerdekat(LaporanBencana $laporan, float $radiusKm = 500): void
-    {
+    public function kirimKeRelawanTerdekat(
+        LaporanBencana $laporan,
+        float $radiusKm = RelawanPenugasanService::DEFAULT_RADIUS_KM,
+    ): void {
         if (! $laporan->latitude || ! $laporan->longitude) {
             return;
         }

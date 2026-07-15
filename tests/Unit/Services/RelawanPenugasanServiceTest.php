@@ -115,12 +115,31 @@ final class RelawanPenugasanServiceTest extends TestCase
         $this->assertFalse($this->service->relawanBerhakAksesLaporan($akunB, $laporan));
     }
 
+    public function testTidakMenugaskanLintasPulauMeskiHanyaRelawanJauhYangAda(): void
+    {
+        $this->seedWilayahMaluku();
+
+        $this->buatAkunRelawan('Tual', -5.6425, 132.7485);
+
+        $terdekat = $this->service->cariRelawanTerdekat(
+            -3.695845,
+            128.181011,
+            'Maluku',
+            500,
+            'Pulau Ambon',
+            'Kota Ambon',
+        );
+
+        $this->assertNull($terdekat);
+    }
+
     private function seedWilayahMaluku(): void
     {
         Wilayah::create([
             'nama' => 'Kota Ambon',
             'kecamatan' => 'Sirimau',
             'kota' => 'Kota Ambon',
+            'pulau' => 'Pulau Ambon',
             'provinsi' => 'Maluku',
             'latitude' => -3.6954,
             'longitude' => 128.1814,
@@ -130,6 +149,7 @@ final class RelawanPenugasanServiceTest extends TestCase
             'nama' => 'Tual',
             'kecamatan' => 'Tual Kota',
             'kota' => 'Tual',
+            'pulau' => 'Kepulauan Kei',
             'provinsi' => 'Maluku',
             'latitude' => -5.6417,
             'longitude' => 132.7472,
